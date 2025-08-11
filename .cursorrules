@@ -1,0 +1,260 @@
+# StratLogic Scraping System - Cursor Rules
+
+## Project Overview
+This is a comprehensive web scraping system designed to collect, process, and store data from multiple sources including web content, academic papers, and government documents. The system uses FastAPI, PostgreSQL, MinIO, Redis, and Playwright with a sophisticated multi-phase architecture.
+
+## Development Workflow
+
+### Phase-Based Development
+- **Phase 1**: ✅ COMPLETED - Core Infrastructure (Database, MinIO, Basic API)
+- **Phase 2**: 🔄 CURRENT - API and Authentication
+- **Phase 3**: 📋 PLANNED - Core Scraping Modules (Web, Paper, Government)
+- **Phase 4**: 📋 PLANNED - Frontend Development
+- **Phase 5**: 📋 PLANNED - Advanced Features and Production
+
+### Task Management
+- Always check `todo/00-master-todo.md` for current priorities
+- Update progress in `todo/progress/` after completing tasks
+- Follow the dependency chain strictly
+- Use sequential thinking tools for complex problem-solving
+
+## Code Quality Standards
+
+### Python Code Style
+- Use **Python 3.11+** features and type hints
+- Follow **PEP 8** with Black formatting
+- Use **mypy** for static type checking
+- Implement comprehensive docstrings for all functions and classes
+- Use **SQLAlchemy 2.0** patterns with async support
+
+### Database Patterns
+- Use **UUID primary keys** for all models
+- Implement **TimestampMixin** for created_at/updated_at
+- Use **SQLAlchemy relationships** properly with cascade options
+- Follow **repository pattern** for data access
+- Use **Alembic** for database migrations
+
+### API Design
+- Use **FastAPI** with proper dependency injection
+- Implement **JWT authentication** with role-based access
+- Use **Pydantic models** for request/response validation
+- Follow **RESTful conventions** for endpoints
+- Implement proper **error handling** and status codes
+
+## Architecture Patterns
+
+### Core Components
+- **Models**: SQLAlchemy models in `src/core/models.py`
+- **Repositories**: Data access layer in `src/core/repositories/`
+- **Services**: Business logic in `src/services/`
+- **Storage**: MinIO integration in `src/storage/`
+- **API**: FastAPI routes in `src/api/`
+
+### Scraping Modules
+- **Web Scraper**: Playwright-based with search engine integration
+- **Paper Scraper**: arXiv API with Grobid PDF processing
+- **Government Scraper**: Indonesian government document scraping
+- **LLM Integration**: OpenRouter/Gemini for keyword expansion
+
+### Storage Strategy
+- **MinIO**: Object storage for artifacts (PDFs, images, documents)
+- **PostgreSQL**: Metadata, user management, job tracking
+- **Redis**: Caching, session management, job queues
+- **File Organization**: Structured bucket hierarchy with metadata
+
+## Development Guidelines
+
+### Environment Setup
+- Use **Docker Compose** for development environment
+- Configure environment variables in `.env` (use `.env.example` as template)
+- Use **virtual environment** for Python dependencies
+- Follow **12-factor app** principles
+
+### Testing Strategy
+- **Unit Tests**: Test individual components and functions
+- **Integration Tests**: Test database and storage operations
+- **API Tests**: Test FastAPI endpoints with proper authentication
+- **Scraping Tests**: Test scraper modules with mock data
+- Use **pytest** with proper fixtures and markers
+
+### Security Practices
+- **Authentication**: JWT tokens with proper expiration
+- **Authorization**: Role-based access control (ADMIN, USER, VIEWER, MODERATOR)
+- **Input Validation**: Strict validation for all user inputs
+- **Rate Limiting**: API rate limiting per user
+- **Audit Logging**: Comprehensive activity logging
+- **Data Privacy**: Private/public data segregation
+
+### Performance Considerations
+- **Async Operations**: Use async/await for I/O operations
+- **Connection Pooling**: Proper database and Redis connection management
+- **Caching**: Implement Redis caching for frequently accessed data
+- **Background Tasks**: Use Celery for long-running scraping jobs
+- **Monitoring**: Implement health checks and metrics
+
+## File Organization
+
+### Source Structure
+```
+src/
+├── core/           # Core models, config, database
+├── api/            # FastAPI routes and middleware
+├── services/       # Business logic and external integrations
+├── storage/        # MinIO and metadata management
+├── scrapers/       # Scraping modules (web, paper, government)
+└── utils/          # Utility functions and helpers
+```
+
+### Configuration Files
+- **Database**: `config/database.py`
+- **MinIO**: `config/minio.py`
+- **Redis**: `config/redis.py`
+- **Environment**: `.env` (not in git), `.env.example`
+
+### Documentation
+- **API Docs**: Auto-generated with FastAPI
+- **Development**: `docs/DEVELOPMENT.md`
+- **Configuration**: `docs/CONFIGURATION.md`
+- **Database Schema**: `docs/database-schema.md`
+
+## Common Patterns
+
+### Model Relationships
+```python
+# User has many scraping jobs
+user = relationship("User", back_populates="scraping_jobs")
+scraping_jobs = relationship("ScrapingJob", back_populates="user", cascade="all, delete-orphan")
+
+# Job has many artifacts
+artifacts = relationship("Artifact", back_populates="job", cascade="all, delete-orphan")
+```
+
+### Repository Pattern
+```python
+class BaseRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+    
+    async def get_by_id(self, id: UUID) -> Optional[Model]:
+        # Implementation
+```
+
+### Service Layer
+```python
+class ScrapingService:
+    def __init__(self, db: AsyncSession, storage: MinIOClient):
+        self.db = db
+        self.storage = storage
+    
+    async def create_job(self, user_id: UUID, job_data: JobCreate) -> ScrapingJob:
+        # Business logic implementation
+```
+
+### API Endpoints
+```python
+@router.post("/jobs/", response_model=JobResponse)
+async def create_job(
+    job_data: JobCreate,
+    current_user: User = Depends(get_current_user),
+    scraping_service: ScrapingService = Depends(get_scraping_service)
+) -> JobResponse:
+    # Endpoint implementation
+```
+
+## Error Handling
+
+### Database Errors
+- Use proper exception handling for database operations
+- Implement retry logic for transient failures
+- Log database errors with context
+
+### Scraping Errors
+- Handle network timeouts and connection errors
+- Implement exponential backoff for rate limiting
+- Store error details in job metadata
+
+### API Errors
+- Use FastAPI's built-in exception handling
+- Return consistent error response format
+- Log API errors with user context
+
+## Monitoring and Logging
+
+### Health Checks
+- Database connectivity
+- MinIO availability
+- Redis connectivity
+- External API status
+
+### Metrics
+- Scraping success rates
+- API response times
+- Storage usage
+- User activity
+
+### Logging
+- Structured logging with context
+- Different log levels for different environments
+- Audit logging for security events
+
+## Deployment Considerations
+
+### Docker
+- Multi-stage builds for production
+- Health checks in containers
+- Proper volume mounting for development
+
+### Environment Variables
+- Use environment-specific configurations
+- Sensitive data in environment variables
+- Validation of required environment variables
+
+### Database Migrations
+- Use Alembic for schema changes
+- Test migrations in development
+- Backup before production migrations
+
+## Best Practices
+
+### Code Organization
+- Keep functions and classes focused and single-purpose
+- Use dependency injection for testability
+- Implement proper separation of concerns
+
+### Documentation
+- Update README.md with new features
+- Document API changes
+- Keep configuration documentation current
+
+### Testing
+- Write tests for new features
+- Maintain test coverage above 80%
+- Use fixtures for common test data
+
+### Git Workflow
+- Use descriptive commit messages
+- Create feature branches for new development
+- Update todo files after completing tasks
+- Keep the main branch stable
+
+## AI Agent Guidelines
+
+### When Working with This Codebase
+- Always check the current phase and task priorities
+- Use sequential thinking for complex problem-solving
+- Follow the established patterns and conventions
+- Update progress documentation after completing tasks
+- Consider the multi-tenant architecture with user isolation
+- Respect the sophisticated data model relationships
+- Implement proper error handling and logging
+- Test thoroughly before marking tasks complete
+
+### Common Tasks
+- **Adding new scrapers**: Follow the existing scraper module pattern
+- **Database changes**: Use Alembic migrations and update models
+- **API endpoints**: Follow FastAPI patterns with proper authentication
+- **Storage operations**: Use the MinIO client abstraction
+- **Background tasks**: Use Celery for long-running operations
+- **Frontend integration**: Consider the React/Next.js frontend requirements
+
+Remember: This is a production-ready system with sophisticated architecture. Always consider scalability, security, and maintainability in your implementations.
