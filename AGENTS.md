@@ -102,3 +102,15 @@ stratlogic-scrape/
 
 -   `README.md`: For a high-level understanding of the project.
 -   `todo/00-master-todo.md`: For the project's roadmap, tasks, and priorities.
+
+## ⚠️ Known Issues
+
+### Docker Permissions in Sandbox Environment
+
+When running `docker compose` or other Docker commands, you may encounter a "permission denied" error related to the Docker daemon socket (`/var/run/docker.sock`). This is a limitation of some sandboxed execution environments and cannot be resolved by the agent.
+
+**Workaround:**
+If you encounter this issue, you will not be able to build or run the Docker containers to verify the full application stack. In this case:
+1.  Complete all other setup steps: creating files, populating them with code, and installing dependencies.
+2.  Instead of running `docker compose up` for verification, ensure that all project files and configurations are correct.
+3.  When submitting your work, note that the final verification step was blocked by the environment's Docker permissions.
