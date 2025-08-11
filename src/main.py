@@ -152,11 +152,18 @@ async def general_exception_handler(request, exc):
 
 
 # Import and include routers
-# TODO: Add API routers when they are created
-# from .api.routes import users, scrapers, artifacts
-# app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
-# app.include_router(scrapers.router, prefix="/api/v1/scrapers", tags=["scrapers"])
-# app.include_router(artifacts.router, prefix="/api/v1/artifacts", tags=["artifacts"])
+from .api.routes import auth_router, users_router, jobs_router, artifacts_router
+from .api.middleware import CorrelationIDMiddleware, RequestLoggingMiddleware
+
+# Add middleware
+app.add_middleware(CorrelationIDMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+
+# Include API routers
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+app.include_router(jobs_router, prefix="/api/v1/jobs", tags=["jobs"])
+app.include_router(artifacts_router, prefix="/api/v1/artifacts", tags=["artifacts"])
 
 
 if __name__ == "__main__":

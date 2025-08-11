@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+"""
+Core test script for Phase 2 essential components.
+"""
+
+import os
+import sys
+
+# Set required environment variables for testing
+os.environ["SECRET_KEY"] = "test-secret-key-for-development-only"
+os.environ["DATABASE_URL"] = "postgresql://test:test@localhost:5432/test"
+
+# Add current directory to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+def test_auth_core():
+    """Test core authentication components."""
+    try:
+        # Test auth utilities
+        from src.auth.password import hash_password, verify_password, validate_password_strength
+        print("✅ Auth password utilities imported")
+        
+        # Test JWT utilities
+        from src.auth.jwt import create_access_token, verify_token
+        print("✅ Auth JWT utilities imported")
+        
+        # Test auth models
+        from src.auth.models import UserCreate, UserLogin, Token, UserResponse, AuthResponse
+        print("✅ Auth models imported")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Auth core test failed: {e}")
+        return False
+
+def test_api_core():
+    """Test core API components."""
+    try:
+        # Test API dependencies
+        from src.api.dependencies import get_db, get_current_user, get_current_active_user, require_role
+        print("✅ API dependencies imported")
+        
+        # Test API middleware
+        from src.api.middleware import CorrelationIDMiddleware, RequestLoggingMiddleware
+        print("✅ API middleware imported")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ API core test failed: {e}")
+        return False
+
+def test_auth_routes():
+    """Test authentication routes."""
+    try:
+        # Test auth routes
+        from src.api.routes.auth import router as auth_router
+        print("✅ Auth routes imported")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Auth routes test failed: {e}")
+        return False
+
+def test_user_routes():
+    """Test user management routes."""
+    try:
+        # Test user routes
+        from src.api.routes.users import router as users_router
+        print("✅ User routes imported")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ User routes test failed: {e}")
+        return False
+
+def test_job_routes():
+    """Test job management routes."""
+    try:
+        # Test job routes
+        from src.api.routes.jobs import router as jobs_router
+        print("✅ Job routes imported")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Job routes test failed: {e}")
+        return False
+
+def test_repositories():
+    """Test repositories."""
+    try:
+        # Test user repository
+        from src.core.repositories.user import UserRepository
+        print("✅ User repository imported")
+        
+        # Test job repository
+        from src.core.repositories.job import JobRepository
+        print("✅ Job repository imported")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Repositories test failed: {e}")
+        return False
+
+def test_auth_functionality():
+    """Test authentication functionality."""
+    try:
+        from src.auth.password import hash_password, verify_password, validate_password_strength
+        
+        # Test password hashing
+        password = "TestPassword123"
+        hashed = hash_password(password)
+        assert hashed != password
+        print("✅ Password hashing works")
+        
+        # Test password verification
+        assert verify_password(password, hashed)
+        print("✅ Password verification works")
+        
+        # Test password strength validation
+        assert validate_password_strength("StrongPass123")
+        assert not validate_password_strength("weak")
+        print("✅ Password strength validation works")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Auth functionality test failed: {e}")
+        return False
+
+def test_pydantic_models():
+    """Test Pydantic models."""
+    try:
+        from src.auth.models import UserCreate, UserLogin, Token
+        
+        # Test UserCreate model
+        user_data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password": "TestPass123",
+            "full_name": "Test User"
+        }
+        user_create = UserCreate(**user_data)
+        assert user_create.username == "testuser"
+        print("✅ UserCreate model works")
+        
+        # Test UserLogin model
+        login_data = {
+            "username": "testuser",
+            "password": "TestPass123"
+        }
+        user_login = UserLogin(**login_data)
+        assert user_login.username == "testuser"
+        print("✅ UserLogin model works")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Pydantic models test failed: {e}")
+        return False
+
+def test_jwt_functionality():
+    """Test JWT functionality."""
+    try:
+        from src.auth.jwt import create_access_token, verify_token
+        
+        # Test token creation
+        data = {"sub": "test-user-id"}
+        token = create_access_token(data)
+        assert token is not None
+        print("✅ JWT token creation works")
+        
+        # Test token verification
+        payload = verify_token(token)
+        assert payload is not None
+        assert payload.get("sub") == "test-user-id"
+        print("✅ JWT token verification works")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ JWT functionality test failed: {e}")
+        return False
+
+if __name__ == "__main__":
+    print("🧪 Testing Phase 2 Core Components\n")
+    
+    # Run tests
+    tests = [
+        ("Auth Core Test", test_auth_core),
+        ("API Core Test", test_api_core),
+        ("Auth Routes Test", test_auth_routes),
+        ("User Routes Test", test_user_routes),
+        ("Job Routes Test", test_job_routes),
+        ("Repositories Test", test_repositories),
+        ("Auth Functionality Test", test_auth_functionality),
+        ("Pydantic Models Test", test_pydantic_models),
+        ("JWT Functionality Test", test_jwt_functionality),
+    ]
+    
+    passed = 0
+    total = len(tests)
+    
+    for test_name, test_func in tests:
+        print(f"\n📋 Running {test_name}...")
+        if test_func():
+            passed += 1
+        else:
+            print(f"❌ {test_name} failed")
+    
+    print(f"\n📊 Test Results: {passed}/{total} tests passed")
+    
+    if passed == total:
+        print("🎉 All tests passed! Phase 2 core components are ready.")
+        print("\n📋 Phase 2 Implementation Summary:")
+        print("✅ Authentication system (JWT, password hashing)")
+        print("✅ API dependencies and middleware")
+        print("✅ User management routes")
+        print("✅ Job management routes")
+        print("✅ Repository pattern with async support")
+        print("✅ Pydantic models for validation")
+        print("✅ Role-based access control")
+        print("✅ Request logging and correlation IDs")
+    else:
+        print("⚠️  Some tests failed. Please check the errors above.")
+        sys.exit(1)

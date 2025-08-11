@@ -4,9 +4,11 @@ User repository for database operations.
 This module provides the UserRepository class for user-related database operations.
 """
 
-from typing import Optional, List
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from typing import Optional, List, Dict, Any
+from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import selectinload
 
 from .base import BaseRepository
 from ..models import User, UserRole
@@ -18,285 +20,244 @@ logger = get_logger(__name__)
 class UserRepository(BaseRepository[User, dict, dict]):
     """Repository for User model operations."""
     
-    def __init__(self):
-        """Initialize UserRepository."""
-        super().__init__(User)
+    def __init__(self, db: AsyncSession):
+        """Initialize UserRepository with database session."""
+        super().__init__(User, db)
+        self.db = db
     
-    def get_by_username(self, db: Session, username: str) -> Optional[User]:
+    async def get_by_username(self, username: str) -> Optional[User]:
         """
         Get user by username.
         
         Args:
-            db: Database session
             username: Username to search for
             
         Returns:
             User instance or None
         """
-        return self.get_by_field(db, "username", username)
+        try:
+            result = await self.db.execute(
+                select(User).where(User.username == username)
+            )
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logger.error(f"Error getting user by username {username}: {e}")
+            return None
     
-    def get_by_email(self, db: Session, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> Optional[User]:
         """
         Get user by email.
         
         Args:
-            db: Database session
             email: Email to search for
             
         Returns:
             User instance or None
         """
-        return self.get_by_field(db, "email", email)
+        try:
+            result = await self.db.execute(
+                select(User).where(User.email == email)
+            )
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logger.error(f"Error getting user by email {email}: {e}")
+            return None
     
-    def get_active_users(self, db: Session, skip: int = 0, limit: int = 100) -> List[User]:
+    async def get_by_id(self, user_id: UUID) -> Optional[User]:
         """
-        Get all active users.
+        Get user by ID.
         
         Args:
-            db: Database session
-            skip: Number of records to skip
-            limit: Maximum number of records to return
+            user_id: User ID
             
         Returns:
-            List of active users
+            User instance or None
         """
         try:
-            return db.query(User).filter(User.is_active == True).offset(skip).limit(limit).all()
+            result = await self.db.execute(
+                select(User).where(User.id == user_id)
+            )
+            return result.scalar_one_or_none()
         except Exception as e:
-            logger.error(f"Error getting active users: {e}")
-            return []
+            logger.error(f"Error getting user by ID {user_id}: {e}")
+            return None
     
-    def get_users_by_role(self, db: Session, role: UserRole, skip: int = 0, limit: int = 100) -> List[User]:
-        """
-        Get users by role.
-        
-        Args:
-            db: Database session
-            role: User role to filter by
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            
-        Returns:
-            List of users with specified role
-        """
-        try:
-            return db.query(User).filter(User.role == role).offset(skip).limit(limit).all()
-        except Exception as e:
-            logger.error(f"Error getting users by role {role}: {e}")
-            return []
-    
-    def create_user(self, db: Session, user_data: dict) -> Optional[User]:
+    async def create(self, user: User) -> User:
         """
         Create a new user.
         
         Args:
-            db: Database session
-            user_data: User data dictionary
+            user: User instance to create
             
         Returns:
-            Created user instance or None
+            Created user instance
         """
         try:
-            user = User(**user_data)
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
             return user
         except Exception as e:
-            db.rollback()
+            await self.db.rollback()
             logger.error(f"Error creating user: {e}")
-            return None
+            raise
     
-    def update_user(self, db: Session, user: User, update_data: dict) -> Optional[User]:
+    async def update(self, user: User) -> User:
         """
-        Update user data.
+        Update user.
         
         Args:
-            db: Database session
             user: User instance to update
-            update_data: Data to update
             
         Returns:
-            Updated user instance or None
+            Updated user instance
         """
         try:
-            for field, value in update_data.items():
-                if hasattr(user, field):
-                    setattr(user, field, value)
-            
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
             return user
         except Exception as e:
-            db.rollback()
+            await self.db.rollback()
             logger.error(f"Error updating user: {e}")
-            return None
+            raise
     
-    def deactivate_user(self, db: Session, user_id: str) -> bool:
+    async def delete(self, user_id: UUID) -> bool:
         """
-        Deactivate a user.
+        Delete user.
         
         Args:
-            db: Database session
-            user_id: User ID to deactivate
+            user_id: User ID to delete
             
         Returns:
             True if successful, False otherwise
         """
         try:
-            user = self.get(db, user_id)
+            user = await self.get_by_id(user_id)
             if user:
-                user.is_active = False
-                db.add(user)
-                db.commit()
+                await self.db.delete(user)
+                await self.db.commit()
                 return True
             return False
         except Exception as e:
-            db.rollback()
-            logger.error(f"Error deactivating user {user_id}: {e}")
+            await self.db.rollback()
+            logger.error(f"Error deleting user {user_id}: {e}")
             return False
     
-    def activate_user(self, db: Session, user_id: str) -> bool:
-        """
-        Activate a user.
-        
-        Args:
-            db: Database session
-            user_id: User ID to activate
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            user = self.get(db, user_id)
-            if user:
-                user.is_active = True
-                db.add(user)
-                db.commit()
-                return True
-            return False
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error activating user {user_id}: {e}")
-            return False
-    
-    def verify_user(self, db: Session, user_id: str) -> bool:
-        """
-        Verify a user account.
-        
-        Args:
-            db: Database session
-            user_id: User ID to verify
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            user = self.get(db, user_id)
-            if user:
-                user.is_verified = True
-                db.add(user)
-                db.commit()
-                return True
-            return False
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error verifying user {user_id}: {e}")
-            return False
-    
-    def update_last_login(self, db: Session, user_id: str) -> bool:
-        """
-        Update user's last login timestamp.
-        
-        Args:
-            db: Database session
-            user_id: User ID to update
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            from datetime import datetime, timezone
-            user = self.get(db, user_id)
-            if user:
-                user.last_login = datetime.now(timezone.utc)
-                db.add(user)
-                db.commit()
-                return True
-            return False
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error updating last login for user {user_id}: {e}")
-            return False
-    
-    def search_users(
-        self, 
-        db: Session, 
-        search_term: str, 
-        skip: int = 0, 
-        limit: int = 100
+    async def list_users(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        search: Optional[str] = None,
+        role: Optional[UserRole] = None,
+        is_active: Optional[bool] = None
     ) -> List[User]:
         """
-        Search users by username, email, or full name.
+        List users with filters.
         
         Args:
-            db: Database session
-            search_term: Search term
             skip: Number of records to skip
             limit: Maximum number of records to return
+            search: Search term for username, email, or full name
+            role: Filter by user role
+            is_active: Filter by active status
             
         Returns:
-            List of matching users
+            List of users
         """
         try:
-            search_pattern = f"%{search_term}%"
-            return db.query(User).filter(
-                or_(
-                    User.username.ilike(search_pattern),
-                    User.email.ilike(search_pattern),
-                    User.full_name.ilike(search_pattern)
+            query = select(User)
+            
+            # Apply filters
+            if search:
+                search_pattern = f"%{search}%"
+                query = query.where(
+                    or_(
+                        User.username.ilike(search_pattern),
+                        User.email.ilike(search_pattern),
+                        User.full_name.ilike(search_pattern)
+                    )
                 )
-            ).offset(skip).limit(limit).all()
+            
+            if role:
+                query = query.where(User.role == role)
+            
+            if is_active is not None:
+                query = query.where(User.is_active == is_active)
+            
+            # Apply pagination
+            query = query.offset(skip).limit(limit)
+            
+            result = await self.db.execute(query)
+            return result.scalars().all()
+            
         except Exception as e:
-            logger.error(f"Error searching users with term '{search_term}': {e}")
+            logger.error(f"Error listing users: {e}")
             return []
     
-    def get_user_stats(self, db: Session) -> dict:
+    async def get_user_stats(self, user_id: UUID) -> Dict[str, Any]:
         """
         Get user statistics.
         
         Args:
-            db: Database session
+            user_id: User ID
             
         Returns:
             Dictionary with user statistics
         """
         try:
-            total_users = db.query(User).count()
-            active_users = db.query(User).filter(User.is_active == True).count()
-            verified_users = db.query(User).filter(User.is_verified == True).count()
+            # Get total jobs
+            from ..models import ScrapingJob, JobStatus
+            total_jobs = await self.db.execute(
+                select(ScrapingJob).where(ScrapingJob.user_id == user_id)
+            )
+            total_jobs = len(total_jobs.scalars().all())
             
-            role_counts = {}
-            for role in UserRole:
-                count = db.query(User).filter(User.role == role).count()
-                role_counts[role.value] = count
+            # Get completed jobs
+            completed_jobs = await self.db.execute(
+                select(ScrapingJob).where(
+                    and_(ScrapingJob.user_id == user_id, ScrapingJob.status == JobStatus.COMPLETED)
+                )
+            )
+            completed_jobs = len(completed_jobs.scalars().all())
+            
+            # Get failed jobs
+            failed_jobs = await self.db.execute(
+                select(ScrapingJob).where(
+                    and_(ScrapingJob.user_id == user_id, ScrapingJob.status == JobStatus.FAILED)
+                )
+            )
+            failed_jobs = len(failed_jobs.scalars().all())
+            
+            # Get total artifacts
+            from ..models import Artifact
+            total_artifacts = await self.db.execute(
+                select(Artifact).where(Artifact.user_id == user_id)
+            )
+            total_artifacts = len(total_artifacts.scalars().all())
+            
+            # Calculate total storage used
+            total_storage = await self.db.execute(
+                select(Artifact.file_size).where(Artifact.user_id == user_id)
+            )
+            total_storage_used = sum([size for size in total_storage.scalars().all() if size])
             
             return {
-                "total_users": total_users,
-                "active_users": active_users,
-                "verified_users": verified_users,
-                "role_counts": role_counts
+                "total_jobs": total_jobs,
+                "completed_jobs": completed_jobs,
+                "failed_jobs": failed_jobs,
+                "total_artifacts": total_artifacts,
+                "total_storage_used": total_storage_used,
+                "last_activity": None  # TODO: Implement last activity tracking
             }
+            
         except Exception as e:
-            logger.error(f"Error getting user stats: {e}")
+            logger.error(f"Error getting user stats for {user_id}: {e}")
             return {
-                "total_users": 0,
-                "active_users": 0,
-                "verified_users": 0,
-                "role_counts": {}
+                "total_jobs": 0,
+                "completed_jobs": 0,
+                "failed_jobs": 0,
+                "total_artifacts": 0,
+                "total_storage_used": 0,
+                "last_activity": None
             }
-
-
-# Global user repository instance
-user_repository = UserRepository()
