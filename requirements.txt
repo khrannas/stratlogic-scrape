@@ -7,6 +7,7 @@ pydantic-settings==2.1.0
 # Database
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
+asyncpg==0.29.0
 alembic==1.13.1
 
 # Storage
@@ -38,9 +39,12 @@ PyPDF2==3.0.1
 pdfplumber==0.10.3
 
 # Content Processing and Analysis
-pytesseract==0.3.10
-easyocr==1.7.0
-spacy==3.7.2
+# NOTE: The following packages have compilation issues on Windows and may need special handling:
+# - spacy==3.7.2 (requires blis which fails to compile)
+# - pytesseract==0.3.10 (requires system dependencies)
+# - easyocr==1.7.0 (requires system dependencies)
+# 
+# Alternative lightweight packages for text processing:
 nltk==3.8.1
 pillow==10.1.0
 pandas==2.1.4
@@ -54,12 +58,19 @@ plotly==5.17.0
 reportlab==4.0.7
 xlsxwriter==3.1.9
 
+# Authentication and Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+email-validator==2.1.0
+
 # Utilities
 python-dotenv==1.0.0
 python-multipart==0.0.6
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
 celery==5.3.4
+
+# Logging and Monitoring
+structlog==23.2.0
+prometheus-client==0.19.0
 
 # Development
 pytest==7.4.3
@@ -69,6 +80,15 @@ isort==5.12.0
 flake8==6.1.0
 mypy==1.7.1
 
-# Monitoring
-prometheus-client==0.19.0
-structlog==23.2.0
+# Optional: Content Processing Packages (require special installation)
+# These packages may need to be installed separately or with pre-built wheels:
+# 
+# For spacy (if needed):
+# pip install spacy
+# python -m spacy download en_core_web_sm
+#
+# For OCR (if needed):
+# pip install pytesseract
+# pip install easyocr
+# Note: pytesseract requires Tesseract OCR to be installed on the system
+# Note: easyocr may have large model downloads on first use

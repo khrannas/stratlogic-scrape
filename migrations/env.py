@@ -4,11 +4,10 @@ Alembic environment configuration for StratLogic Scraping System.
 This module configures the Alembic migration environment.
 """
 
-import asyncio
 from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import create_engine
 
 from alembic import context
 
@@ -38,7 +37,11 @@ target_metadata = Base.metadata
 
 def get_url():
     """Get database URL from settings."""
-    return settings.database_url
+    # Convert async URL to sync URL for migrations
+    url = settings.database_url
+    if url.startswith('postgresql+asyncpg://'):
+        url = url.replace('postgresql+asyncpg://', 'postgresql://')
+    return url
 
 
 def run_migrations_offline() -> None:
@@ -75,19 +78,16 @@ def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
     
-    connectable = async_engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    connectable = create_engine(
+        configuration["sqlalchemy.url"],
         poolclass=pool.NullPool,
     )
 
-    async def do_run_migrations(connection: Connection) -> None:
+    with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
-
-    asyncio.run(do_run_migrations(connectable))
 
 
 if context.is_offline_mode():
