@@ -58,9 +58,16 @@ This system provides a unified platform for scraping and storing various types o
 - **Selenium** - Alternative web automation
 
 ### AI/ML Integration
-- **OpenAI GPT-4** - Keyword expansion and content analysis
+- **OpenRouter** - Cost-effective LLM access (GPT-4, Claude, etc.)
+- **Google Gemini** - Free/cheap LLM for content analysis
 - **LangChain** - LLM orchestration
 - **Transformers** - Text processing and analysis
+
+### Frontend Technologies
+- **React/Next.js** - Modern web frontend
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Styling and responsive design
+- **React Query** - Data fetching and caching
 
 ### Additional Tools
 - **Docker** - Containerization
@@ -90,6 +97,14 @@ stratlogic-scrape/
 │   └── services/
 │       ├── llm_service/
 │       └── job_scheduler/
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   └── utils/
+│   ├── public/
+│   └── package.json
 ├── tests/
 ├── docs/
 ├── docker/
@@ -149,8 +164,8 @@ python src/main.py
 ## 📊 Data Flow
 
 1. **Input Processing**
-   - User submits scraping request with keywords
-   - LLM expands keywords into related terms
+   - User submits scraping request with keywords via frontend
+   - LLM (OpenRouter/Gemini) expands keywords into related terms
    - System determines appropriate scrapers
 
 2. **Content Collection**
@@ -164,8 +179,9 @@ python src/main.py
    - Full-text indexing for search
 
 4. **Access & Retrieval**
+   - Frontend interface for document viewing and search
    - API endpoints for data access
-   - Search functionality
+   - Real-time progress tracking
    - User permission management
 
 ## 🔧 Configuration
@@ -176,7 +192,8 @@ python src/main.py
 - `MINIO_SECRET_KEY` - MinIO secret key
 - `POSTGRES_URL` - PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
-- `OPENAI_API_KEY` - OpenAI API key
+- `OPENROUTER_API_KEY` - OpenRouter API key for cost-effective LLM access
+- `GEMINI_API_KEY` - Google Gemini API key for free/cheap LLM
 - `ARXIV_API_KEY` - arXiv API key (optional)
 
 ### Scraper Configuration
@@ -231,15 +248,21 @@ For support and questions:
 - [ ] Paper scraper with arXiv integration
 - [ ] Government document scraper
 - [ ] Advanced web scraping features
-- [ ] LLM keyword expansion
+- [ ] LLM keyword expansion (OpenRouter/Gemini)
 
-### Phase 3: Advanced Features
+### Phase 3: Frontend Development
+- [ ] React/Next.js frontend application
+- [ ] Document viewing and search interface
+- [ ] Scraping request form and job management
+- [ ] Real-time progress tracking dashboard
+
+### Phase 4: Advanced Features
 - [ ] Real-time monitoring
 - [ ] Advanced analytics
 - [ ] API rate limiting
 - [ ] Performance optimization
 
-### Phase 4: Scale & Production
+### Phase 5: Scale & Production
 - [ ] Docker containerization
 - [ ] CI/CD pipeline
 - [ ] Production deployment

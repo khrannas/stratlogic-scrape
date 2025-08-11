@@ -30,10 +30,10 @@ Implement a comprehensive web scraping module using Playwright with search engin
 - [ ] Implement image and media extraction
 - [ ] Add content validation and filtering
 
-### 6.4 LLM Integration
-- [ ] Implement keyword expansion service
-- [ ] Add content analysis and classification
-- [ ] Implement content summarization
+### 6.4 LLM Integration (OpenRouter/Gemini)
+- [ ] Implement keyword expansion service using OpenRouter
+- [ ] Add content analysis and classification using Gemini
+- [ ] Implement content summarization with fallback providers
 - [ ] Add language detection
 - [ ] Implement content quality scoring
 
@@ -452,7 +452,6 @@ class ContentExtractor:
 ```python
 # src/scrapers/web_scraper/keyword_expander.py
 from typing import List, Dict, Any
-import openai
 import logging
 from src.services.llm_service import LLMService
 
@@ -773,6 +772,11 @@ class WebScraperSettings(BaseSettings):
     requests_per_minute: int = 30
     delay_between_requests: float = 2.0
     
+    # LLM settings
+    llm_provider: str = "openrouter"  # "openrouter" or "gemini"
+    openrouter_api_key: str = ""
+    gemini_api_key: str = ""
+    
     class Config:
         env_prefix = "WEB_SCRAPER_"
 ```
@@ -799,6 +803,62 @@ class WebScraperSettings(BaseSettings):
 - [ ] Create content extraction guide
 - [ ] Document rate limiting and best practices
 
+## Risk Assessment and Mitigation
+
+### High Risk Items
+
+#### 1. API Rate Limits and Blocking
+**Risk**: Search engines and websites may block or rate-limit scraping activities, causing service disruptions.
+
+**Mitigation Strategies**:
+- **Intelligent Rate Limiting**: Implement exponential backoff and jitter algorithms
+- **Proxy Rotation**: Use rotating proxy pools to distribute requests
+- **User-Agent Rotation**: Rotate user agents to appear as different browsers
+- **Request Distribution**: Distribute requests across multiple time periods
+- **Respect Robots.txt**: Implement automatic robots.txt parsing and compliance
+- **Session Management**: Implement proper session handling and cookies
+- **Fallback Sources**: Maintain alternative data sources when primary sources are blocked
+- **Monitoring**: Real-time monitoring of blocking and rate limit events
+
+#### 2. Legal Compliance and Terms of Service
+**Risk**: Violating website terms of service or legal requirements could result in legal action.
+
+**Mitigation Strategies**:
+- **Terms of Service Compliance**: Automated checking and compliance with ToS
+- **Legal Framework**: Comprehensive legal compliance documentation
+- **Data Retention**: Implement compliant data retention and deletion policies
+- **User Consent**: Implement proper consent management for data collection
+- **Privacy Controls**: Implement data subject rights and privacy controls
+- **Legal Review**: Regular legal review of scraping practices
+- **Transparency**: Clear documentation of data collection practices
+- **Opt-out Mechanisms**: Provide mechanisms for websites to opt-out
+
+### Medium Risk Items
+
+#### 1. Data Quality and Relevance
+**Risk**: Scraped content may be low quality, irrelevant, or contain errors.
+
+**Mitigation Strategies**:
+- **Content Validation**: Multi-stage content validation and filtering
+- **Quality Scoring**: Implement ML-based content quality scoring
+- **Duplicate Detection**: Automated duplicate content identification
+- **Relevance Filtering**: Filter content based on relevance to keywords
+- **Content Freshness**: Validate content age and relevance
+- **User Feedback**: Collect and incorporate user feedback on content quality
+- **Quality Metrics**: Track and monitor content quality KPIs
+
+#### 2. System Performance and Reliability
+**Risk**: Web scraping can be resource-intensive and may cause system performance issues.
+
+**Mitigation Strategies**:
+- **Resource Management**: Implement proper resource allocation and monitoring
+- **Async Processing**: Use async/await for non-blocking operations
+- **Connection Pooling**: Implement connection pooling for HTTP requests
+- **Error Handling**: Comprehensive error handling and retry mechanisms
+- **Performance Monitoring**: Monitor scraping performance and resource usage
+- **Load Balancing**: Distribute scraping load across multiple instances
+- **Graceful Degradation**: Implement fallback mechanisms when services fail
+
 ## Notes
 
 - Implement proper rate limiting to avoid being blocked
@@ -807,6 +867,10 @@ class WebScraperSettings(BaseSettings):
 - Implement retry logic for failed requests
 - Consider implementing content deduplication
 - Add support for JavaScript-heavy sites
+- Implement comprehensive monitoring and alerting
+- Set up automated compliance checking
+- Use secure and ethical scraping practices
+- Implement proper error handling and logging
 
 ## Next Steps
 
