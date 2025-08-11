@@ -82,6 +82,18 @@ class User(Base, TimestampMixin):
     audit_logs = relationship("AuditLog", back_populates="user")
     api_rate_limits = relationship("APIRateLimit", back_populates="user", cascade="all, delete-orphan")
     
+    # Security relationships
+    security_events = relationship("SecurityEvent", back_populates="user", cascade="all, delete-orphan")
+    security_alerts = relationship("SecurityAlert", foreign_keys="SecurityAlert.user_id", back_populates="user", cascade="all, delete-orphan")
+    rate_limits = relationship("RateLimit", back_populates="user", cascade="all, delete-orphan")
+    data_access_logs = relationship("DataAccessLog", back_populates="user", cascade="all, delete-orphan")
+    
+    # Content processing relationships
+    export_jobs = relationship("ExportJob", back_populates="user", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="user", cascade="all, delete-orphan")
+    scheduled_reports = relationship("ScheduledReport", back_populates="user", cascade="all, delete-orphan")
+    document_annotations = relationship("DocumentAnnotation", back_populates="user", cascade="all, delete-orphan")
+    
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
     
@@ -224,6 +236,7 @@ class Artifact(Base, TimestampMixin):
     user = relationship("User", back_populates="artifacts")
     metadata_tags = relationship("MetadataTag", back_populates="artifact", cascade="all, delete-orphan")
     content_extractions = relationship("ContentExtraction", back_populates="artifact", cascade="all, delete-orphan")
+    content_enrichment = relationship("ContentEnrichment", back_populates="artifact", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Artifact(id={self.id}, title='{self.title}', type={self.artifact_type})>"

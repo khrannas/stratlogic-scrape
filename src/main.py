@@ -15,6 +15,8 @@ from contextlib import asynccontextmanager
 from .core.config import settings
 from .core.database import check_database_connection
 from .core.utils import get_logger
+from .api.middleware.error_handling import setup_error_handling
+from .core.health_checks import check_health
 
 # Get logger
 logger = get_logger(__name__)
@@ -64,6 +66,9 @@ app.add_middleware(
     allowed_hosts=settings.allowed_hosts,
 )
 
+# Setup error handling
+setup_error_handling(app)
+
 
 @app.get("/")
 async def root():
@@ -80,21 +85,11 @@ async def root():
 async def health_check():
     """Health check endpoint."""
     try:
-        # Check database connection
-        db_healthy = check_database_connection()
+        # Use the comprehensive health check system
+        health_status = await check_health()
+        health_status["version"] = "1.0.0"
         
-        health_status = {
-            "status": "healthy" if db_healthy else "unhealthy",
-            "timestamp": "2024-01-01T00:00:00Z",  # TODO: Use actual timestamp
-            "services": {
-                "database": "healthy" if db_healthy else "unhealthy",
-                "redis": "unknown",  # TODO: Add Redis health check
-                "minio": "unknown",  # TODO: Add MinIO health check
-            },
-            "version": "1.0.0",
-        }
-        
-        status_code = 200 if db_healthy else 503
+        status_code = 200 if health_status["status"] == "healthy" else 503
         return JSONResponse(content=health_status, status_code=status_code)
         
     except Exception as e:
@@ -152,7 +147,7 @@ async def general_exception_handler(request, exc):
 
 
 # Import and include routers
-from .api.routes import auth_router, users_router, jobs_router, artifacts_router
+from .api.routes import auth_router, users_router, jobs_router, artifacts_router, monitoring_router, search_router, performance_router, security_router, content_processing_router
 from .api.middleware import CorrelationIDMiddleware, RequestLoggingMiddleware
 
 # Add middleware
@@ -164,6 +159,11 @@ app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 app.include_router(jobs_router, prefix="/api/v1/jobs", tags=["jobs"])
 app.include_router(artifacts_router, prefix="/api/v1/artifacts", tags=["artifacts"])
+app.include_router(monitoring_router, prefix="/api/v1", tags=["monitoring"])
+app.include_router(search_router, prefix="/api/v1", tags=["search"])
+app.include_router(performance_router, prefix="/api/v1", tags=["performance"])
+app.include_router(security_router, prefix="/api/v1", tags=["security"])
+app.include_router(content_processing_router, prefix="/api/v1/content", tags=["content-processing"])
 
 
 if __name__ == "__main__":

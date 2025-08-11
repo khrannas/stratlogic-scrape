@@ -37,6 +37,23 @@ torch>=2.6.0
 PyPDF2==3.0.1
 pdfplumber==0.10.3
 
+# Content Processing and Analysis
+pytesseract==0.3.10
+easyocr==1.7.0
+spacy==3.7.2
+nltk==3.8.1
+pillow==10.1.0
+pandas==2.1.4
+numpy==1.24.3
+scikit-learn==1.3.2
+
+# Data Visualization and Export
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.17.0
+reportlab==4.0.7
+xlsxwriter==3.1.9
+
 # Utilities
 python-dotenv==1.0.0
 python-multipart==0.0.6
