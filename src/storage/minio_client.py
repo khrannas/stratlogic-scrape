@@ -14,7 +14,9 @@ class MinIOClient:
                 secure=settings.MINIO_SECURE
             )
             self.logger = logging.getLogger(__name__)
-            self._ensure_buckets_exist()
+            # Only ensure buckets exist if not in test mode
+            if not hasattr(settings, 'TESTING') or not settings.TESTING:
+                self._ensure_buckets_exist()
         except Exception as e:
             logging.error(f"Failed to initialize MinIO client: {e}")
             raise
@@ -40,4 +42,15 @@ class MinIOClient:
             self.logger.error(f"MinIO health check failed: {e}")
             return False
 
-minio_client = MinIOClient()
+# Lazy initialization to avoid connection issues during import
+_minio_client_instance = None
+
+def get_minio_client():
+    """Get or create MinIO client instance"""
+    global _minio_client_instance
+    if _minio_client_instance is None:
+        _minio_client_instance = MinIOClient()
+    return _minio_client_instance
+
+# For backward compatibility
+minio_client = get_minio_client()
