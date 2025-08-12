@@ -232,7 +232,7 @@ class TestWebScraper:
             keywords=["test"],
             job_id="test-job",
             user_id="test-user",
-            search_engines=["google", "bing"]
+            search_engines=["duckduckgo"]
         )
 
         # Verify both engines were called

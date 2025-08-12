@@ -155,16 +155,57 @@ class SearchEngineScraper:
             search_url = f"https://duckduckgo.com/?q={quote_plus(query)}"
 
             self.logger.info(f"Searching DuckDuckGo for: {query}")
-            await page.goto(search_url, wait_until="networkidle")
+            
+            # Try to navigate to DuckDuckGo
+            try:
+                await page.goto(search_url, wait_until="networkidle", timeout=30000)
+            except Exception as e:
+                self.logger.warning(f"DuckDuckGo HTTPS failed: {e}")
+                # Try alternative approach
+                await page.goto("https://duckduckgo.com/", wait_until="networkidle", timeout=30000)
+                # Then search
+                await page.fill('input[name="q"]', query)
+                await page.press('input[name="q"]', 'Enter')
+                await page.wait_for_timeout(3000)
+            
             await self.playwright_manager.wait_for_load(page)
 
+            # Get current URL to debug
+            current_url = page.url
+            self.logger.info(f"Current page URL: {current_url}")
+            
+            # Check if we're still on DuckDuckGo
+            if "duckduckgo.com" not in current_url:
+                self.logger.warning(f"Redirected away from DuckDuckGo to: {current_url}")
+                return []
+            
             results = await page.evaluate("""
                 () => {
                     const results = [];
-                    const elements = document.querySelectorAll('.result, [data-testid="result"]');
-
+                    console.log('Starting DuckDuckGo result extraction...');
+                    
+                    // Try multiple selectors
+                    const selectors = [
+                        '.result',
+                        '[data-testid="result"]',
+                        '.web-result',
+                        '.result__body'
+                    ];
+                    
+                    let elements = [];
+                    for (const selector of selectors) {
+                        const found = document.querySelectorAll(selector);
+                        console.log(`Selector ${selector}: ${found.length} elements`);
+                        if (found.length > 0) {
+                            elements = found;
+                            break;
+                        }
+                    }
+                    
+                    console.log(`Total elements found: ${elements.length}`);
+                    
                     elements.forEach((element, index) => {
-                        const titleElement = element.querySelector('.result__title a, [data-testid="result-title"] a');
+                        const titleElement = element.querySelector('.result__title a, [data-testid="result-title"] a, a[href]');
                         const snippetElement = element.querySelector('.result__snippet, [data-testid="result-snippet"]');
 
                         if (titleElement) {
@@ -181,6 +222,7 @@ class SearchEngineScraper:
                         }
                     });
 
+                    console.log(`Total results extracted: ${results.length}`);
                     return results;
                 }
             """)
@@ -190,6 +232,120 @@ class SearchEngineScraper:
 
         except Exception as e:
             self.logger.error(f"DuckDuckGo search failed for '{query}': {e}")
+            return []
+        finally:
+            await page.close()
+            await self.playwright_manager.return_browser(browser)
+
+    async def search_yahoo(
+        self,
+        query: str,
+        max_results: int = 10,
+        delay: float = 2.0
+    ) -> List[Dict[str, Any]]:
+        """Search Yahoo and extract results"""
+
+        await self._rate_limit(delay)
+
+        browser = await self.playwright_manager.get_browser()
+        page = await self.playwright_manager.create_page(browser)
+
+        try:
+            search_url = f"https://search.yahoo.com/search?p={quote_plus(query)}&n={max_results}"
+
+            self.logger.info(f"Searching Yahoo for: {query}")
+            await page.goto(search_url, wait_until="networkidle")
+            await self.playwright_manager.wait_for_load(page)
+
+            results = await page.evaluate("""
+                () => {
+                    const results = [];
+                    const elements = document.querySelectorAll('.algo, .dd');
+
+                    elements.forEach((element, index) => {
+                        const titleElement = element.querySelector('h3 a, .title a');
+                        const snippetElement = element.querySelector('.compText, .snippet');
+
+                        if (titleElement) {
+                            const url = titleElement.href;
+                            if (url && url.startsWith('http') && !url.includes('yahoo.com')) {
+                                results.push({
+                                    title: titleElement.textContent.trim(),
+                                    url: url,
+                                    snippet: snippetElement ? snippetElement.textContent.trim() : '',
+                                    position: index + 1,
+                                    source: 'yahoo'
+                                });
+                            }
+                        }
+                    });
+
+                    return results;
+                }
+            """)
+
+            self.logger.info(f"Found {len(results)} Yahoo results for: {query}")
+            return results[:max_results]
+
+        except Exception as e:
+            self.logger.error(f"Yahoo search failed for '{query}': {e}")
+            return []
+        finally:
+            await page.close()
+            await self.playwright_manager.return_browser(browser)
+
+    async def search_brave(
+        self,
+        query: str,
+        max_results: int = 10,
+        delay: float = 2.0
+    ) -> List[Dict[str, Any]]:
+        """Search Brave and extract results"""
+
+        await self._rate_limit(delay)
+
+        browser = await self.playwright_manager.get_browser()
+        page = await self.playwright_manager.create_page(browser)
+
+        try:
+            search_url = f"https://search.brave.com/search?q={quote_plus(query)}&count={max_results}"
+
+            self.logger.info(f"Searching Brave for: {query}")
+            await page.goto(search_url, wait_until="networkidle")
+            await self.playwright_manager.wait_for_load(page)
+
+            results = await page.evaluate("""
+                () => {
+                    const results = [];
+                    const elements = document.querySelectorAll('.result, .web-result');
+
+                    elements.forEach((element, index) => {
+                        const titleElement = element.querySelector('.result-header a, .web-result-header a');
+                        const snippetElement = element.querySelector('.snippet-content, .web-result-snippet');
+
+                        if (titleElement) {
+                            const url = titleElement.href;
+                            if (url && url.startsWith('http') && !url.includes('brave.com')) {
+                                results.push({
+                                    title: titleElement.textContent.trim(),
+                                    url: url,
+                                    snippet: snippetElement ? snippetElement.textContent.trim() : '',
+                                    position: index + 1,
+                                    source: 'brave'
+                                });
+                            }
+                        }
+                    });
+
+                    return results;
+                }
+            """)
+
+            self.logger.info(f"Found {len(results)} Brave results for: {query}")
+            return results[:max_results]
+
+        except Exception as e:
+            self.logger.error(f"Brave search failed for '{query}': {e}")
             return []
         finally:
             await page.close()
@@ -214,6 +370,10 @@ class SearchEngineScraper:
                     results = await self.search_bing(query, max_results_per_engine, delay)
                 elif engine == 'duckduckgo':
                     results = await self.search_duckduckgo(query, max_results_per_engine, delay)
+                elif engine == 'yahoo':
+                    results = await self.search_yahoo(query, max_results_per_engine, delay)
+                elif engine == 'brave':
+                    results = await self.search_brave(query, max_results_per_engine, delay)
                 else:
                     self.logger.warning(f"Unknown search engine: {engine}")
                     continue

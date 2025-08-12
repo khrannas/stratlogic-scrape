@@ -13,7 +13,7 @@ class WebScraperSettings(BaseSettings):
     # Search settings
     max_results_per_keyword: int = 10
     search_delay: float = 2.0
-    default_search_engines: List[str] = ['google', 'bing']
+    default_search_engines: List[str] = ['duckduckgo']
 
     # Content extraction
     max_content_length: int = 10000

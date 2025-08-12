@@ -94,7 +94,13 @@ class PlaywrightManager:
                 proxy={
                     "server": self.proxy
                 } if self.proxy else None,
-                args=browser_args
+                args=browser_args + [
+                    "--ignore-certificate-errors",
+                    "--ignore-ssl-errors",
+                    "--ignore-certificate-errors-spki-list",
+                    "--disable-web-security",
+                    "--allow-running-insecure-content"
+                ]
             )
 
             self.logger.debug("Created new browser")
@@ -140,8 +146,8 @@ class PlaywrightManager:
         # Set viewport
         await page.set_viewport_size({"width": 1920, "height": 1080})
 
-        # Enable JavaScript
-        await page.set_java_script_enabled(True)
+        # JavaScript is enabled by default in Playwright
+        # No need to explicitly enable it
 
         # Set timeout
         page.set_default_timeout(30000)

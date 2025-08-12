@@ -36,7 +36,7 @@ class WebScraper:
         job_id: str,
         user_id: str,
         max_results_per_keyword: int = 10,
-        search_engines: List[str] = ['google', 'bing'],
+        search_engines: List[str] = ['duckduckgo'],
         expand_keywords: bool = True,
         extract_images: bool = True,
         extract_links: bool = True
@@ -170,16 +170,21 @@ class WebScraper:
                 'content_hash': content['content_hash'],
                 'file_size': len(content['text_content']),
                 'mime_type': 'text/html',
+                'minio_path': f"artifacts/{job_id}/{content['content_hash']}.txt",
                 'is_public': False
             }
 
             # Store in database
             db = next(get_db())
-            artifact = artifact_service.create_artifact(db, artifact_in=artifact_data)
+            from src.api.schemas.artifact_schemas import ArtifactCreate
+            artifact_schema = ArtifactCreate(**artifact_data)
+            artifact = artifact_service.create_artifact(db, artifact_in=artifact_schema)
             artifact_id = str(artifact.id)
 
             # Store content in MinIO
             content_bytes = content['text_content'].encode('utf-8')
+            import io
+            content_io = io.BytesIO(content_bytes)
             metadata = {
                 'url': content['url'],
                 'keyword': content.get('keyword', ''),
@@ -189,9 +194,10 @@ class WebScraper:
                 'extraction_timestamp': content.get('extraction_timestamp', '')
             }
 
-            await self.artifact_storage.upload_artifact(
-                content_bytes,
+            self.artifact_storage.upload_artifact(
+                content_io,
                 f"{artifact_id}.txt",
+                "artifacts",
                 "text/plain",
                 metadata,
                 user_id

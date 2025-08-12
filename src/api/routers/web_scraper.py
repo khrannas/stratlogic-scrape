@@ -18,7 +18,7 @@ router = APIRouter(prefix="/web-scraper", tags=["web-scraper"])
 async def start_web_scraping(
     keywords: List[str],
     max_results_per_keyword: int = 10,
-    search_engines: List[str] = ["google", "bing"],
+    search_engines: List[str] = ["duckduckgo"],
     expand_keywords: bool = True,
     extract_images: bool = True,
     extract_links: bool = True,
@@ -184,7 +184,7 @@ async def run_web_scraping_job(
     user_id: str,
     keywords: List[str],
     max_results_per_keyword: int = 10,
-    search_engines: List[str] = ["google", "bing"],
+    search_engines: List[str] = ["duckduckgo"],
     expand_keywords: bool = True,
     extract_images: bool = True,
     extract_links: bool = True

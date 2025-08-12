@@ -140,7 +140,7 @@ class TestWebScraperIntegration:
             keywords=["test"],
             job_id="test-job",
             user_id="test-user",
-            search_engines=["google", "bing"],
+            search_engines=["duckduckgo"],
             max_results_per_keyword=3
         )
 

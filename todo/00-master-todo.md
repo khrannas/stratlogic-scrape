@@ -443,9 +443,15 @@ This document provides a comprehensive overview of all tasks required to build t
 - **Database Testing**: All models and operations tested successfully
 - **MinIO Storage Integration**: Complete storage system with upload/download, metadata management, access control, and comprehensive testing
 - **User Authentication System**: Complete JWT-based authentication with role-based access control, user registration, login, and comprehensive security features
-- **Web Scraper Implementation**: Complete web scraping system with Playwright browser management, search engine integration (Google, Bing, DuckDuckGo), content extraction, LLM keyword expansion, and comprehensive API endpoints
+- **Web Scraper Implementation**: Complete web scraping system with Playwright browser management, search engine integration (DuckDuckGo, Google, Bing, Yahoo, Brave), content extraction, LLM keyword expansion, and comprehensive API endpoints. **Note**: Search engines blocked by regional filtering - single URL scraping fully functional
 
 ### 🔄 Next Priority Tasks
+
+#### **Web Scraper Improvements** (High Priority)
+- **Search API Integration**: Implement SerpAPI or ScrapingBee for reliable search results
+- **Alternative Discovery Methods**: Add RSS feed scraping, sitemap discovery, and social media APIs
+- **Proxy/VPN Support**: Add proxy configuration to bypass regional blocks
+- **URL Curation System**: Build database of known good URLs for specific topics
 1. **Task 07**: Paper Scraper Implementation
 2. **Task 08**: Government Document Scraper
 

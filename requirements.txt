@@ -30,7 +30,7 @@ requests==2.32.4
 aiohttp==3.12.15
 httpx==0.28.1
 python-magic==0.4.27
-python-magic-bin==0.4.14
+# python-magic-bin==0.4.14
 
 # Image and document processing
 opencv-python==4.11.0.86
