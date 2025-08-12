@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from fastapi import FastAPI
 from src.core.config import settings
-from src.api.routers import users, jobs, artifacts
+from src.api.routers import users, jobs, artifacts, auth
 from src.core.logging import setup_logging
 from src.api.middleware.cors import setup_cors_middleware
 from src.api.middleware.error_handling import setup_error_handling_middleware
@@ -18,6 +18,8 @@ app = FastAPI(
 setup_cors_middleware(app)
 setup_error_handling_middleware(app)
 
+# Include routers
+app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(users.router, prefix=settings.API_V1_STR)
 app.include_router(jobs.router, prefix=settings.API_V1_STR)
 app.include_router(artifacts.router, prefix=settings.API_V1_STR)

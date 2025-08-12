@@ -48,6 +48,39 @@ class UserAlreadyExistsException(StratLogicException):
         )
 
 
+class AuthenticationError(StratLogicException):
+    """Raised when authentication fails."""
+
+    def __init__(self, message: str = "Authentication failed"):
+        super().__init__(
+            message=message,
+            status_code=401,
+            details={"error": "authentication_failed"}
+        )
+
+
+class UserAlreadyExistsError(StratLogicException):
+    """Raised when trying to create a user that already exists."""
+
+    def __init__(self, message: str = "User already exists"):
+        super().__init__(
+            message=message,
+            status_code=400,
+            details={"error": "user_already_exists"}
+        )
+
+
+class AuthorizationError(StratLogicException):
+    """Raised when authorization fails."""
+
+    def __init__(self, message: str = "Insufficient permissions"):
+        super().__init__(
+            message=message,
+            status_code=403,
+            details={"error": "authorization_failed"}
+        )
+
+
 class JobNotFoundException(StratLogicException):
     """Raised when a job is not found."""
 
