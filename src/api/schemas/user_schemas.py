@@ -28,7 +28,7 @@ class UserInDBBase(UserBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Properties to return to client
 class User(UserInDBBase):
@@ -37,3 +37,6 @@ class User(UserInDBBase):
 # Properties stored in DB
 class UserInDB(UserInDBBase):
     password_hash: str
+
+    class Config:
+        from_attributes = True

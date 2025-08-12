@@ -43,4 +43,10 @@ class JobService:
         db.commit()
         return db_obj
 
+    def get_jobs(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[ScrapingJob]:
+        return db.query(ScrapingJob).offset(skip).limit(limit).all()
+
+    def delete_job(self, db: Session, *, job_id: uuid.UUID) -> ScrapingJob:
+        return self.remove_job(db, job_id=job_id)
+
 job_service = JobService()

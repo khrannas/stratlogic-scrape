@@ -45,5 +45,21 @@ class ArtifactService:
         db.refresh(db_extraction)
         return db_extraction
 
+    def get_artifacts(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Artifact]:
+        return db.query(Artifact).offset(skip).limit(limit).all()
+
+    def delete_artifact(self, db: Session, *, artifact_id: uuid.UUID) -> Artifact:
+        return self.remove_artifact(db, artifact_id=artifact_id)
+
+    def upload_artifact_file(self, db: Session, *, artifact_id: uuid.UUID, file) -> str:
+        # This would integrate with the storage service
+        # For now, return a placeholder URL
+        return f"/storage/artifacts/{artifact_id}/{file.filename}"
+
+    def get_download_url(self, db: Session, *, artifact_id: uuid.UUID) -> str:
+        # This would integrate with the storage service
+        # For now, return a placeholder URL
+        return f"/storage/artifacts/{artifact_id}/download"
+
 
 artifact_service = ArtifactService()

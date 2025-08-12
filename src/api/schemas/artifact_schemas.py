@@ -1,7 +1,7 @@
 import uuid
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 # ContentExtraction Schemas
 class ContentExtractionBase(BaseModel):
@@ -18,7 +18,7 @@ class ContentExtraction(ContentExtractionBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Artifact Schemas
 class ArtifactBase(BaseModel):
@@ -47,4 +47,4 @@ class Artifact(ArtifactBase):
     extractions: List[ContentExtraction] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

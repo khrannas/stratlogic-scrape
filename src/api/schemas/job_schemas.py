@@ -17,7 +17,7 @@ class JobConfiguration(JobConfigurationBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ScrapingJob Schemas
 class ScrapingJobBase(BaseModel):
@@ -52,4 +52,20 @@ class ScrapingJob(ScrapingJobBase):
     configurations: List[JobConfiguration] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+# Job Status Schema for status endpoint
+class JobStatus(BaseModel):
+    job_id: uuid.UUID
+    status: str
+    progress: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Alias for backward compatibility
+Job = ScrapingJob
+JobCreate = ScrapingJobCreate
+JobUpdate = ScrapingJobUpdate
