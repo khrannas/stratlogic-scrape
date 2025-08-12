@@ -10,7 +10,7 @@ For a detailed project overview, system architecture, and data flow, please refe
 
 ## 🛠️ Technology Stack
 
-- **Backend**: Python 3.11+, FastAPI
+- **Backend**: Python 3.13+, FastAPI
 - **Frontend**: React/Next.js, TypeScript
 - **Storage**: MinIO, PostgreSQL, Redis
 - **Web Scraping**: Playwright, BeautifulSoup4, Scrapy

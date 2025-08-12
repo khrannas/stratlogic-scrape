@@ -1,4 +1,5 @@
-from pydantic import BaseSettings, PostgresDsn, RedisDsn, validator
+from pydantic import PostgresDsn, RedisDsn, validator
+from pydantic_settings import BaseSettings
 from typing import Any
 
 class Settings(BaseSettings):
@@ -18,14 +19,7 @@ class Settings(BaseSettings):
     def assemble_db_connection(cls, v: str | None, values: dict[str, Any]) -> Any:
         if isinstance(v, str):
             return v
-        return PostgresDsn.build(
-            scheme="postgresql",
-            user=values.get("POSTGRES_USER"),
-            password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_SERVER"),
-            port=str(values.get("POSTGRES_PORT")),
-            path=f"/{values.get('POSTGRES_DB') or ''}",
-        )
+        return f"postgresql://{values.get('POSTGRES_USER')}:{values.get('POSTGRES_PASSWORD')}@{values.get('POSTGRES_SERVER')}:{values.get('POSTGRES_PORT')}/{values.get('POSTGRES_DB')}"
 
     # Redis
     REDIS_HOST: str = "redis"
@@ -37,12 +31,7 @@ class Settings(BaseSettings):
     def assemble_redis_connection(cls, v: str | None, values: dict[str, Any]) -> Any:
         if isinstance(v, str):
             return v
-        return RedisDsn.build(
-            scheme="redis",
-            host=values.get("REDIS_HOST"),
-            port=str(values.get("REDIS_PORT")),
-            path=f"/{values.get('REDIS_DB') or ''}",
-        )
+        return f"redis://{values.get('REDIS_HOST')}:{values.get('REDIS_PORT')}/{values.get('REDIS_DB')}"
 
     # MinIO
     MINIO_ENDPOINT: str = "minio:9000"
@@ -57,6 +46,10 @@ class Settings(BaseSettings):
 
     # Auth
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+
+    # Development
+    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
 
     class Config:
         case_sensitive = True

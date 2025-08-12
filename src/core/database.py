@@ -1,12 +1,16 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import QueuePool
-
-# In a real application, this would come from a config file or environment variables
-DATABASE_URL = "postgresql://user:password@localhost:5432/stratlogic"
+from .config import settings
 
 class DatabaseManager:
-    def __init__(self, database_url: str = DATABASE_URL):
+    def __init__(self, database_url: str = None):
+        if database_url is None:
+            database_url = str(settings.DATABASE_URL)
+            # For local development, replace 'db' with 'localhost'
+            if database_url and 'db:5432' in database_url:
+                database_url = database_url.replace('db:5432', 'localhost:5432')
+
         self.engine = create_engine(
             database_url,
             poolclass=QueuePool,

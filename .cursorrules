@@ -1,0 +1,141 @@
+# Cursor Rules for StratLogic Scraping System
+
+## 🎯 Project Overview
+
+This is the StratLogic Scraping System - a comprehensive web scraping platform designed to collect, process, and store data from various sources including web content, academic papers, and government documents. The system uses a microservices-based architecture with Python backend, React/Next.js frontend, and various storage technologies.
+
+## 🛠️ Technology Stack
+
+- **Backend**: Python 3.13+, FastAPI
+- **Frontend**: React/Next.js, TypeScript  
+- **Storage**: MinIO, PostgreSQL, Redis
+- **Web Scraping**: Playwright, BeautifulSoup4, Scrapy
+- **AI/ML**: OpenRouter, Google Gemini, LangChain
+- **DevOps**: Docker, Celery
+
+## 📁 Project Structure
+
+```
+stratlogic-scrape/
+├── src/                    # Python backend code
+│   ├── scrapers/          # Web scraping modules
+│   ├── storage/           # Storage and data management
+│   ├── api/               # FastAPI routes and schemas
+│   ├── core/              # Core models and configuration
+│   └── services/          # Business logic services
+├── frontend/              # React/Next.js frontend
+├── tests/                 # Backend tests
+├── docs/                  # Project documentation
+├── docker/                # Docker configurations
+├── scripts/               # Utility scripts
+└── todo/                  # Project roadmap and tasks
+```
+
+## 📝 Development Guidelines
+
+### Coding Standards
+- Follow PEP 8 Python conventions
+- Use Python 3.13+ features appropriately
+- Write comprehensive docstrings for functions and classes
+- Use type hints throughout the codebase
+
+### Testing Requirements
+- All new features must include tests
+- Tests are located in `tests/` directory
+- Use pytest for testing framework
+- Maintain good test coverage
+
+### Code Organization
+- Keep related functionality in appropriate modules
+- Use clear, descriptive names for files and functions
+- Follow the existing project structure patterns
+- Separate concerns between scrapers, storage, API, and services
+
+## 🔄 Development Workflow
+
+### Before Starting Work
+1. Always check `todo/00-master-todo.md` for current priorities
+2. Review existing code in the relevant modules
+3. Understand the data flow and architecture
+
+### When Making Changes
+1. Follow the established patterns in the codebase
+2. Update tests for any new functionality
+3. Ensure compatibility with existing services
+4. Consider the microservices architecture
+
+### Task Management
+- The project roadmap is managed in `todo/` directory
+- Main file: `todo/00-master-todo.md`
+- Update todo files after completing tasks
+- Check dependencies between tasks
+
+## 🔧 Common Patterns
+
+### Database Models
+- Located in `src/core/models/`
+- Use SQLAlchemy with proper relationships
+- Include audit fields where appropriate
+
+### API Endpoints
+- Use FastAPI with proper request/response schemas
+- Located in `src/api/routers/`
+- Include proper error handling and validation
+
+### Scrapers
+- Located in `src/scrapers/`
+- Use Playwright for dynamic content
+- Implement proper error handling and retry logic
+- Store results using the storage services
+
+### Services
+- Business logic in `src/services/`
+- Separate concerns between different service types
+- Use dependency injection where appropriate
+
+## ⚠️ Known Issues & Solutions
+
+### Docker Permissions
+- Docker daemon socket permissions may cause issues in sandboxed environments
+- If Docker commands fail, focus on code and configuration files
+- Note Docker permission limitations in work submissions
+
+### Environment Setup
+- Use virtual environment: `python -m venv venv`
+- Install dependencies: `pip install -r requirements.txt`
+- Copy and configure `.env.example` to `.env`
+
+## 📄 Key Files to Reference
+
+- `README.md` - High-level project overview
+- `todo/00-master-todo.md` - Current priorities and roadmap
+- `AGENTS.md` - Detailed agent guidelines
+- `pyproject.toml` - Project dependencies and configuration
+- `docker-compose.yml` - Service orchestration
+
+## 🎯 AI Agent Guidelines
+
+### When Working on This Project
+1. **Always check the todo folder first** - understand current priorities
+2. **Follow the established architecture** - don't reinvent patterns
+3. **Use the technology stack appropriately** - leverage FastAPI, SQLAlchemy, etc.
+4. **Consider the microservices design** - maintain separation of concerns
+5. **Update documentation** - keep README and todo files current
+6. **Test thoroughly** - ensure new code works with existing systems
+
+### Code Quality Standards
+- Write clean, maintainable code
+- Include proper error handling
+- Use async/await patterns where appropriate
+- Follow FastAPI best practices
+- Implement proper logging
+- Use environment variables for configuration
+
+### Integration Points
+- Database: PostgreSQL with SQLAlchemy ORM
+- Storage: MinIO for file storage
+- Caching: Redis for session and cache data
+- Queue: Celery for background tasks
+- Frontend: React/Next.js with TypeScript
+
+Remember: This is a production-grade scraping system. Focus on reliability, scalability, and maintainability in all code changes.

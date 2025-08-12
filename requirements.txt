@@ -1,0 +1,15 @@
+# Core dependencies
+fastapi>=0.104.1
+uvicorn>=0.24.0
+sqlalchemy>=2.0.23
+psycopg2-binary>=2.9.9
+redis>=5.0.1
+minio>=7.1.16
+playwright>=1.40.0
+alembic>=1.13.0
+pydantic[email]>=1.10.13
+passlib[bcrypt]>=1.7.4
+
+# Development dependencies
+ruff>=0.1.0
+pytest>=7.4.3
