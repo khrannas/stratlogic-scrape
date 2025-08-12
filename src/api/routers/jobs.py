@@ -18,7 +18,36 @@ def create_job(
     job_in: job_schemas.JobCreate,
 ):
     """
-    Create new scraping job.
+    Create a new web scraping job.
+
+    This endpoint initiates a new scraping job that will collect data from the specified
+    source. The job will be created with an initial status and can be monitored for progress.
+
+    **Request Body:**
+    - `name`: Descriptive name for the job
+    - `description`: Detailed description of what the job will scrape
+    - `source_url`: Target URL to scrape
+    - `scraper_type`: Type of scraper to use (web, paper, government)
+    - `priority`: Job priority level (low, medium, high)
+    - `user_id`: ID of the user creating the job
+
+    **Returns:**
+    - Job object with generated ID and initial status
+
+    **Raises:**
+    - 422: If request body validation fails
+
+    **Example:**
+    ```json
+    {
+        "name": "Scrape Company News",
+        "description": "Collect latest news articles from company website",
+        "source_url": "https://example.com/news",
+        "scraper_type": "web",
+        "priority": "medium",
+        "user_id": "123e4567-e89b-12d3-a456-426614174000"
+    }
+    ```
     """
     job = job_service.create_job(db, job_in=job_in)
     return job
@@ -87,7 +116,35 @@ def get_job_status(
     job_id: str,
 ):
     """
-    Get job status.
+    Get the current status and progress of a scraping job.
+
+    This endpoint returns detailed status information about a specific job, including
+    its current state, progress percentage, and timestamps.
+
+    **Path Parameters:**
+    - `job_id`: Unique identifier of the job (UUID format)
+
+    **Returns:**
+    - Job status object with current state and progress
+
+    **Raises:**
+    - 404: If job with the specified ID is not found
+
+    **Example:**
+    ```
+    GET /api/v1/jobs/123e4567-e89b-12d3-a456-426614174000/status
+    ```
+
+    **Response:**
+    ```json
+    {
+        "job_id": "123e4567-e89b-12d3-a456-426614174000",
+        "status": "running",
+        "progress": 75.5,
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:45:00Z"
+    }
+    ```
     """
     job = job_service.get_job(db, job_id=job_id)
     if not job:

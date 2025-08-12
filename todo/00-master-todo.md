@@ -32,13 +32,13 @@ This document provides a comprehensive overview of all tasks required to build t
 4. **Task 04: Basic API Endpoints**
    - Priority: High
    - Estimated Time: 2-3 days
-   - Status: In Progress
+   - Status: ✅ Completed
    - Dependencies: Task 01, Task 02, Task 03
 
 5. **Task 05: User Authentication System**
    - Priority: High
    - Estimated Time: 2-3 days
-   - Status: In Progress
+   - Status: Ready to start
    - Dependencies: Task 01, Task 02, Task 04
 
 ### Phase 3: Core Scraping Modules (Weeks 4-6)
