@@ -3,10 +3,39 @@ name = "stratlogic-scrape"
 version = "0.1.0"
 description = "A comprehensive web scraping system"
 authors = ["Your Name <you@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
+fastapi = "^0.104.1"
+uvicorn = "^0.24.0"
+sqlalchemy = "^2.0.23"
+psycopg2-binary = "^2.9.9"
+redis = "^5.0.1"
+minio = "^7.1.16"
+playwright = "^1.40.0"
+alembic = "^1.13.0"
+pydantic = {extras = ["email"], version = "^1.10.13"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.0"
+pytest = "^7.4.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
