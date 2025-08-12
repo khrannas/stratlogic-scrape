@@ -34,13 +34,16 @@ class Settings(BaseSettings):
         return f"redis://{values.get('REDIS_HOST')}:{values.get('REDIS_PORT')}/{values.get('REDIS_DB')}"
 
     # MinIO
-    MINIO_ENDPOINT: str = "minio:9000"
+    MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_SECURE: bool = False
 
     # LLM & Scraper APIs
+    LLM_PROVIDER: str = "openai"  # "openai" or "gemini"
+    OPENAI_API_KEY: str | None = None
     OPENROUTER_API_KEY: str | None = None
+    GOOGLE_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None
     ARXIV_API_KEY: str | None = None
 

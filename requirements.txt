@@ -20,6 +20,7 @@ langchain-core==0.3.69
 langchain-google-genai==2.0.10
 langchain-text-splitters==0.3.8
 google-generativeai==0.8.5
+openai==1.68.0
 openai-whisper==20250625
 
 # Web scraping dependencies
@@ -28,6 +29,8 @@ lxml==5.4.0
 requests==2.32.4
 aiohttp==3.12.15
 httpx==0.28.1
+python-magic==0.4.27
+python-magic-bin==0.4.14
 
 # Image and document processing
 opencv-python==4.11.0.86
@@ -38,8 +41,9 @@ PyYAML==6.0.2
 structlog==25.4.0
 tenacity==9.1.2
 orjson==3.11.0
+email-validator==2.2.0
 
 # Development dependencies
-ruff>=0.1.0
 pytest==8.4.1
 pytest-asyncio==1.1.0
+ruff==0.12.8
