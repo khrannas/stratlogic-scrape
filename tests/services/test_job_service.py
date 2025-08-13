@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 import pytest
 
-from src.services import job_service
+from src.services.job_service import job_service
 from src.api.schemas import job_schemas
 from src.core.models.user import User
 

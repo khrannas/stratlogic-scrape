@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from src.api.schemas import job_schemas
-from src.services import job_service
+from src.services.job_service import job_service
 from src.core.database import get_db
 
 router = APIRouter(

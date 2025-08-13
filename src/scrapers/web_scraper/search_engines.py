@@ -152,83 +152,124 @@ class SearchEngineScraper:
         page = await self.playwright_manager.create_page(browser)
 
         try:
-            search_url = f"https://duckduckgo.com/?q={quote_plus(query)}"
+            # Set realistic user agent
+            await page.set_extra_http_headers({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            })
 
-            self.logger.info(f"Searching DuckDuckGo for: {query}")
-            
-            # Try to navigate to DuckDuckGo
-            try:
-                await page.goto(search_url, wait_until="networkidle", timeout=30000)
-            except Exception as e:
-                self.logger.warning(f"DuckDuckGo HTTPS failed: {e}")
-                # Try alternative approach
-                await page.goto("https://duckduckgo.com/", wait_until="networkidle", timeout=30000)
-                # Then search
-                await page.fill('input[name="q"]', query)
-                await page.press('input[name="q"]', 'Enter')
-                await page.wait_for_timeout(3000)
-            
-            await self.playwright_manager.wait_for_load(page)
+            # Try multiple approaches
+            search_urls = [
+                f"https://duckduckgo.com/?q={quote_plus(query)}",
+                f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
+            ]
 
-            # Get current URL to debug
-            current_url = page.url
-            self.logger.info(f"Current page URL: {current_url}")
-            
-            # Check if we're still on DuckDuckGo
-            if "duckduckgo.com" not in current_url:
-                self.logger.warning(f"Redirected away from DuckDuckGo to: {current_url}")
-                return []
-            
-            results = await page.evaluate("""
-                () => {
-                    const results = [];
-                    console.log('Starting DuckDuckGo result extraction...');
-                    
-                    // Try multiple selectors
-                    const selectors = [
-                        '.result',
-                        '[data-testid="result"]',
-                        '.web-result',
-                        '.result__body'
-                    ];
-                    
-                    let elements = [];
-                    for (const selector of selectors) {
-                        const found = document.querySelectorAll(selector);
-                        console.log(`Selector ${selector}: ${found.length} elements`);
-                        if (found.length > 0) {
-                            elements = found;
-                            break;
-                        }
-                    }
-                    
-                    console.log(`Total elements found: ${elements.length}`);
-                    
-                    elements.forEach((element, index) => {
-                        const titleElement = element.querySelector('.result__title a, [data-testid="result-title"] a, a[href]');
-                        const snippetElement = element.querySelector('.result__snippet, [data-testid="result-snippet"]');
+            results = []
 
-                        if (titleElement) {
-                            const url = titleElement.href;
-                            if (url && url.startsWith('http') && !url.includes('duckduckgo.com')) {
-                                results.push({
-                                    title: titleElement.textContent.trim(),
-                                    url: url,
-                                    snippet: snippetElement ? snippetElement.textContent.trim() : '',
-                                    position: index + 1,
-                                    source: 'duckduckgo'
+            for search_url in search_urls:
+                try:
+                    self.logger.info(f"Trying DuckDuckGo URL: {search_url}")
+
+                    # Navigate with longer timeout and different wait strategy
+                    await page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
+
+                    # Wait a bit for page to load
+                    await page.wait_for_timeout(3000)
+
+                    # Check if we got redirected to error page
+                    current_url = page.url
+                    self.logger.info(f"Current page URL: {current_url}")
+
+                    if "static-pages" in current_url or "418" in current_url:
+                        self.logger.warning(f"Redirected to error page: {current_url}")
+                        continue
+
+                    # Try to find search results
+                    results = await page.evaluate("""
+                        () => {
+                            const results = [];
+                            console.log('Starting DuckDuckGo result extraction...');
+
+                            // Try multiple selectors for different DuckDuckGo layouts
+                            const selectors = [
+                                '.result',
+                                '[data-testid="result"]',
+                                '.web-result',
+                                '.result__body',
+                                '.result__title',
+                                '.nrn-react-div',
+                                '[data-testid="result-title"]'
+                            ];
+
+                            let elements = [];
+                            for (const selector of selectors) {
+                                const found = document.querySelectorAll(selector);
+                                console.log(`Selector ${selector}: ${found.length} elements`);
+                                if (found.length > 0) {
+                                    elements = found;
+                                    break;
+                                }
+                            }
+
+                            // If no specific selectors work, try general approach
+                            if (elements.length === 0) {
+                                const allLinks = document.querySelectorAll('a[href]');
+                                console.log(`Found ${allLinks.length} total links`);
+
+                                allLinks.forEach((link, index) => {
+                                    const url = link.href;
+                                    if (url && url.startsWith('http') &&
+                                        !url.includes('duckduckgo.com') &&
+                                        !url.includes('javascript:') &&
+                                        url.length > 20) {
+
+                                        const title = link.textContent.trim();
+                                        if (title && title.length > 10) {
+                                            results.push({
+                                                title: title,
+                                                url: url,
+                                                snippet: '',
+                                                position: index + 1,
+                                                source: 'duckduckgo'
+                                            });
+                                        }
+                                    }
+                                });
+                            } else {
+                                elements.forEach((element, index) => {
+                                    const titleElement = element.querySelector('.result__title a, [data-testid="result-title"] a, a[href]');
+                                    const snippetElement = element.querySelector('.result__snippet, [data-testid="result-snippet"]');
+
+                                    if (titleElement) {
+                                        const url = titleElement.href;
+                                        if (url && url.startsWith('http') && !url.includes('duckduckgo.com')) {
+                                            results.push({
+                                                title: titleElement.textContent.trim(),
+                                                url: url,
+                                                snippet: snippetElement ? snippetElement.textContent.trim() : '',
+                                                position: index + 1,
+                                                source: 'duckduckgo'
+                                            });
+                                        }
+                                    }
                                 });
                             }
+
+                            console.log(`Total results extracted: ${results.length}`);
+                            return results;
                         }
-                    });
+                    """)
 
-                    console.log(`Total results extracted: ${results.length}`);
-                    return results;
-                }
-            """)
+                    if results and len(results) > 0:
+                        self.logger.info(f"Found {len(results)} DuckDuckGo results for: {query}")
+                        return results[:max_results]
 
-            self.logger.info(f"Found {len(results)} DuckDuckGo results for: {query}")
-            return results[:max_results]
+                except Exception as e:
+                    self.logger.warning(f"DuckDuckGo URL {search_url} failed: {e}")
+                    continue
+
+            # If all approaches failed, return empty results
+            self.logger.warning(f"All DuckDuckGo approaches failed for: {query}")
+            return []
 
         except Exception as e:
             self.logger.error(f"DuckDuckGo search failed for '{query}': {e}")

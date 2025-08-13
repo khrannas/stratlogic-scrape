@@ -53,13 +53,13 @@ This document provides a comprehensive overview of all tasks required to build t
 7. **Task 07: Paper Scraper Implementation**
    - Priority: High
    - Estimated Time: 3-4 days
-   - Status: Ready to start
+   - Status: ✅ Completed (All components implemented and tested)
    - Dependencies: Task 01-06
 
 8. **Task 08: Government Document Scraper**
    - Priority: Medium
    - Estimated Time: 3-4 days
-   - Status: Ready to start
+   - Status: ✅ Completed (All components implemented and tested)
    - Dependencies: Task 01-07
 
 ### Phase 3.5: Frontend Development (Week 7)
@@ -68,7 +68,7 @@ This document provides a comprehensive overview of all tasks required to build t
 9. **Task 09: Frontend Development**
    - Priority: High
    - Estimated Time: 5-6 days
-   - Status: Ready to start
+   - Status: ✅ Completed (Next.js frontend with authentication, dashboard, job management, and document viewing. Build issues fixed - CSS and TypeScript errors resolved)
    - Dependencies: Task 01-08
 
 ### Phase 4: Advanced Features (Week 8)
@@ -79,6 +79,25 @@ This document provides a comprehensive overview of all tasks required to build t
     - Estimated Time: 4-5 days
     - Status: Not started
     - Dependencies: Task 01-09
+
+### Phase 3.6: Bug Fixes and Maintenance (Current)
+**Dependencies**: Phase 3.5
+
+10.5. **Task 10.5: Import Issues and Service Integration Fixes**
+    - Priority: High
+    - Estimated Time: 1 day
+    - Status: ✅ Completed (Fixed import issues in job_service, user_service, and related routers)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Fixed `AttributeError: module 'src.services.job_service' has no attribute 'get_jobs'`
+      - Corrected import statements in multiple files:
+        - `src/api/routers/jobs.py`
+        - `src/api/routers/users.py`
+        - `tests/conftest.py`
+        - `tests/services/test_job_service.py`
+      - All API endpoints now working correctly
+      - Jobs endpoint (`/api/v1/jobs/`) responding properly
+      - Auth endpoint (`/api/v1/auth/me`) working as expected
 
 11. **Task 11: System Integration and Testing**
     - Priority: High
@@ -204,6 +223,7 @@ This document provides a comprehensive overview of all tasks required to build t
   - Responsive design for desktop and mobile
 - **Files Created**: 15+ frontend files
 - **Testing**: Unit tests for frontend components and integration tests
+- **Status**: ✅ Completed (Build issues fixed - CSS and TypeScript errors resolved)
 
 ### Advanced Features
 
@@ -444,6 +464,8 @@ This document provides a comprehensive overview of all tasks required to build t
 - **MinIO Storage Integration**: Complete storage system with upload/download, metadata management, access control, and comprehensive testing
 - **User Authentication System**: Complete JWT-based authentication with role-based access control, user registration, login, and comprehensive security features
 - **Web Scraper Implementation**: Complete web scraping system with Playwright browser management, search engine integration (DuckDuckGo, Google, Bing, Yahoo, Brave), content extraction, LLM keyword expansion, and comprehensive API endpoints. **Note**: Search engines blocked by regional filtering - single URL scraping fully functional
+- **Paper Scraper Implementation**: Complete academic paper scraping system with arXiv API integration, Grobid PDF processing, CrossRef API integration, LLM content analysis, and comprehensive API endpoints
+- **Government Document Scraper**: Complete Indonesian government document scraping system with website crawling, API integration, document processing, content analysis, and comprehensive API endpoints
 
 ### 🔄 Next Priority Tasks
 
@@ -452,8 +474,8 @@ This document provides a comprehensive overview of all tasks required to build t
 - **Alternative Discovery Methods**: Add RSS feed scraping, sitemap discovery, and social media APIs
 - **Proxy/VPN Support**: Add proxy configuration to bypass regional blocks
 - **URL Curation System**: Build database of known good URLs for specific topics
-1. **Task 07**: Paper Scraper Implementation
-2. **Task 08**: Government Document Scraper
+
+1. **Task 10**: Advanced Features and Optimization
 
 ## Notes
 

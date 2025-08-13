@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from src.core.config import settings
 from src.core.models.base import Base
 from src.core.models.user import User
-from src.services import user_service
+from src.services.user_service import user_service
 from src.api.schemas import user_schemas
 
 # Use a separate test database URL, connecting via localhost
