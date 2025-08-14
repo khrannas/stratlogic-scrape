@@ -101,10 +101,51 @@ class ArtifactStorage:
             }
         except S3Error as e:
             if e.code == 'NoSuchKey':
+                self.logger.warning(f"Artifact not found: {object_name}")
                 return None
             else:
                 self.logger.error(f"Failed to get artifact metadata: {e}")
                 raise
+
+    async def upload_json(
+        self,
+        data: Dict[str, Any],
+        filename: str,
+        bucket_name: str = "artifacts",
+        user_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        Upload JSON data as an artifact
+
+        Args:
+            data: JSON data to upload
+            filename: Name for the file
+            bucket_name: MinIO bucket name
+            user_id: User ID for organization
+            metadata: Additional metadata
+
+        Returns:
+            Artifact ID (file_id)
+        """
+        import json
+        import io
+
+        # Convert JSON data to bytes
+        json_bytes = json.dumps(data, indent=2, ensure_ascii=False).encode('utf-8')
+        file_data = io.BytesIO(json_bytes)
+
+        # Upload using existing method
+        result = self.upload_artifact(
+            file_data=file_data,
+            filename=filename,
+            bucket_name=bucket_name,
+            content_type='application/json',
+            metadata=metadata,
+            user_id=user_id
+        )
+
+        return result['file_id']
 
     def generate_presigned_url(self, object_name: str, bucket_name: str = "artifacts", expires_sec: int = 3600) -> Optional[str]:
         """Generate a presigned URL for secure access"""

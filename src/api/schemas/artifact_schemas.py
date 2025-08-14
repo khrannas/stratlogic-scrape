@@ -48,3 +48,16 @@ class Artifact(ArtifactBase):
 
     class Config:
         from_attributes = True
+
+# Response schema for frontend compatibility
+class ArtifactResponse(BaseModel):
+    id: uuid.UUID
+    title: Optional[str] = None
+    content: Optional[str] = None  # This will be populated from MinIO or metadata
+    source_type: Optional[str] = None  # This will be mapped from job_type
+    source_url: Optional[str] = None
+    created_at: datetime
+    url: Optional[str] = None  # Alias for source_url for frontend compatibility
+
+    class Config:
+        from_attributes = True

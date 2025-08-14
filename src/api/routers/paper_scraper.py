@@ -3,6 +3,7 @@ from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from src.api.dependencies.auth import get_current_user
 from src.api.schemas.user_schemas import User
@@ -19,14 +20,18 @@ logger = logging.getLogger(__name__)
 # Initialize paper scraper
 paper_scraper = PaperScraper()
 
+# Request model for paper search
+class PaperSearchRequest(BaseModel):
+    query: str
+    max_results: Optional[int] = 10
+    sources: Optional[List[str]] = ["arxiv"]
+    extract_pdfs: Optional[bool] = True
+    analyze_content: Optional[bool] = True
+    download_pdfs: Optional[bool] = True
+
 @router.post("/search", response_model=ScrapingJob)
 async def search_papers(
-    query: str,
-    max_results: Optional[int] = 10,
-    sources: Optional[List[str]] = ["arxiv"],
-    extract_pdfs: Optional[bool] = True,
-    analyze_content: Optional[bool] = True,
-    download_pdfs: Optional[bool] = True,
+    request: PaperSearchRequest,
     background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -35,12 +40,7 @@ async def search_papers(
     Search and scrape academic papers
 
     Args:
-        query: Search query for papers
-        max_results: Maximum number of results to return
-        sources: List of sources to search ('arxiv', 'crossref')
-        extract_pdfs: Whether to extract PDF content using Grobid
-        analyze_content: Whether to analyze content with LLM
-        download_pdfs: Whether to download PDFs
+        request: Paper search request containing query and options
         background_tasks: FastAPI background tasks
         current_user: Current authenticated user
 
@@ -52,7 +52,7 @@ async def search_papers(
         job_data = JobCreate(
             user_id=current_user.id,
             job_type="paper_scraping",
-            keywords=[query]  # Use the query as the primary keyword
+            keywords=[request.query]  # Use the query as the primary keyword
         )
 
         job = job_service.create_job(db, job_in=job_data)
@@ -63,12 +63,12 @@ async def search_papers(
                 _run_paper_scraping,
                 job.id,
                 current_user.id,
-                query,
-                max_results,
-                sources,
-                extract_pdfs,
-                analyze_content,
-                download_pdfs
+                request.query,
+                request.max_results,
+                request.sources,
+                request.extract_pdfs,
+                request.analyze_content,
+                request.download_pdfs
             )
 
         return job

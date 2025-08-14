@@ -2,19 +2,20 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 import uuid
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.core.models.job import ScrapingJob, JobConfiguration
 from src.api.schemas import job_schemas
 from src.core.database import get_db
 
 class JobService:
-    def create_job(self, db: Session, *, job_in: job_schemas.ScrapingJobCreate) -> ScrapingJob:
+    def create_job(self, db: Session, *, job_in: job_schemas.JobCreate) -> ScrapingJob:
         db_job = ScrapingJob(
             user_id=job_in.user_id,
             job_type=job_in.job_type,
             keywords=job_in.keywords,
             max_results=job_in.max_results,
+            expanded_keywords=job_in.expanded_keywords,
             status=job_in.status,
             progress=job_in.progress,
             total_items=job_in.total_items,
@@ -77,12 +78,12 @@ class JobService:
 
             # Update status
             job.status = status
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
 
             if status == "running" and not job.started_at:
-                job.started_at = datetime.utcnow()
+                job.started_at = datetime.now(UTC)
             elif status in ["completed", "failed"] and not job.completed_at:
-                job.completed_at = datetime.utcnow()
+                job.completed_at = datetime.now(UTC)
 
             if error_message:
                 job.error_message = error_message
@@ -122,7 +123,7 @@ class JobService:
             if "progress" in results:
                 job.progress = results["progress"]
 
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
 
             # Save changes
             db.add(job)
@@ -131,6 +132,37 @@ class JobService:
 
         except Exception as e:
             print(f"Error updating job results: {e}")
+        finally:
+            db.close()
+
+    async def update_job_progress(self, job_id: str, progress: int):
+        """
+        Update job progress asynchronously
+
+        Args:
+            job_id: Job identifier
+            progress: Progress percentage (0-100)
+        """
+        try:
+            # Get database session
+            db = next(get_db())
+
+            # Get job
+            job = self.get_job(db, job_id=uuid.UUID(job_id))
+            if not job:
+                return
+
+            # Update progress
+            job.progress = progress
+            job.updated_at = datetime.now(UTC)
+
+            # Save changes
+            db.add(job)
+            db.commit()
+            db.refresh(job)
+
+        except Exception as e:
+            print(f"Error updating job progress: {e}")
         finally:
             db.close()
 

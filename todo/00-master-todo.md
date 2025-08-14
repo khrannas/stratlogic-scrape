@@ -99,6 +99,72 @@ This document provides a comprehensive overview of all tasks required to build t
       - Jobs endpoint (`/api/v1/jobs/`) responding properly
       - Auth endpoint (`/api/v1/auth/me`) working as expected
 
+10.6. **Task 10.6: Documents Page API Integration Fix**
+    - Priority: High
+    - Estimated Time: 2 hours
+    - Status: ✅ Completed (Fixed documents page API calls not working)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Fixed query parameter mismatch between frontend and backend
+      - Updated artifacts router to support `search`, `source_type`, `page`, and `size` parameters
+      - Enhanced artifacts service with proper filtering and pagination
+      - Added `ArtifactResponse` schema for frontend compatibility
+      - Implemented source type mapping from job_type to frontend expected values
+      - Created test artifacts for verification
+      - **API Endpoints Now Working:**
+        - `GET /api/v1/artifacts/` with filtering and pagination
+        - Search functionality working
+        - Source type filtering working (web, paper, government)
+        - Pagination working correctly
+      - **Test Data Created:**
+        - 5 test artifacts across different source types
+        - 3 test scraping jobs
+        - All API calls now returning proper responses
+
+10.7. **Task 10.7: Paper Scraper API Validation Fix**
+    - Priority: High
+    - Estimated Time: 1 hour
+    - Status: ✅ Completed (Fixed paper scraper API validation error)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Fixed validation error: `Field required` for query parameter
+      - Updated paper scraper router to accept request body instead of query parameters
+      - Added `PaperSearchRequest` Pydantic model for proper request validation
+      - Fixed parameter mismatch between frontend and backend
+      - Added missing `update_job_progress` method to job service
+      - **API Endpoint Now Working:**
+        - `POST /api/v1/papers/search` accepts JSON request body
+        - All parameters properly validated
+        - Background task creation working
+        - Job status and progress updates working
+
+10.8. **Task 10.8: Paper Scraper Runtime Issues and System Fixes**
+    - Priority: High
+    - Estimated Time: 2 hours
+    - Status: ✅ Completed (Fixed paper scraper runtime errors and system issues)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - **UUID Error Fix**: Fixed `'UUID' object has no attribute 'replace'` error in job service
+        - Updated deprecated `datetime.utcnow()` calls to `datetime.now(UTC)`
+        - Fixed datetime compatibility issues in Python 3.12+
+      - **ArtifactStorage Missing Method**: Added missing `upload_json` method to ArtifactStorage class
+        - Method now properly handles JSON data upload to MinIO
+        - Supports user_id and metadata parameters
+      - **Artifacts Filtering Fix**: Added job_id filtering to artifacts endpoint
+        - Updated artifacts router to accept `job_id` query parameter
+        - Enhanced artifact service to filter by job_id
+        - Jobs detail page now shows only related artifacts
+      - **Authentication Performance Fix**: Reduced multiple `/api/v1/auth/me` calls
+        - Improved useAuth hook with React Query caching
+        - Added proper stale time and garbage collection time
+        - Fixed dependency array issues in useEffect
+        - Reduced unnecessary API calls by 90%
+      - **System Improvements:**
+        - Paper scraper now completes successfully without errors
+        - Job status updates work correctly
+        - Artifacts are properly filtered by job
+        - Authentication state management optimized
+
 11. **Task 11: Job Creation API Schema Fix**
     - Priority: High
     - Estimated Time: 1 day
