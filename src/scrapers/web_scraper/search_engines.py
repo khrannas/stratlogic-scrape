@@ -4,6 +4,7 @@ import logging
 from urllib.parse import quote_plus, urlparse
 import re
 from datetime import datetime
+import platform
 
 from .playwright_manager import PlaywrightManager
 
@@ -20,6 +21,13 @@ class SearchEngineScraper:
         self.last_request_time = 0
         self.min_delay = 2.0  # Minimum delay between requests
 
+        # Check if we're on Windows and log compatibility info
+        if platform.system() == "Windows":
+            self.logger.info("Running on Windows - Playwright compatibility mode enabled")
+            self.windows_mode = True
+        else:
+            self.windows_mode = False
+
     async def search_google(
         self,
         query: str,
@@ -30,56 +38,67 @@ class SearchEngineScraper:
 
         await self._rate_limit(delay)
 
-        browser = await self.playwright_manager.get_browser()
-        page = await self.playwright_manager.create_page(browser)
-
         try:
-            # Construct search URL
-            search_url = f"https://www.google.com/search?q={quote_plus(query)}&num={max_results}"
+            browser = await self.playwright_manager.get_browser()
+            page = await self.playwright_manager.create_page(browser)
 
-            self.logger.info(f"Searching Google for: {query}")
-            await page.goto(search_url, wait_until="networkidle")
-            await self.playwright_manager.wait_for_load(page)
+            try:
+                # Construct search URL
+                search_url = f"https://www.google.com/search?q={quote_plus(query)}&num={max_results}"
 
-            # Extract search results
-            results = await page.evaluate("""
-                () => {
-                    const results = [];
-                    const elements = document.querySelectorAll('div.g, div[data-sokoban-container]');
+                self.logger.info(f"Searching Google for: {query}")
+                await page.goto(search_url, wait_until="networkidle")
+                await self.playwright_manager.wait_for_load(page)
 
-                    elements.forEach((element, index) => {
-                        const titleElement = element.querySelector('h3, .LC20lb');
-                        const linkElement = element.querySelector('a[href]');
-                        const snippetElement = element.querySelector('.VwiC3b, .st, .aCOpRe');
+                # Extract search results
+                results = await page.evaluate("""
+                    () => {
+                        const results = [];
+                        const elements = document.querySelectorAll('div.g, div[data-sokoban-container]');
 
-                        if (titleElement && linkElement) {
-                            const url = linkElement.href;
-                            // Filter out non-http URLs and Google's own pages
-                            if (url && url.startsWith('http') && !url.includes('google.com')) {
-                                results.push({
-                                    title: titleElement.textContent.trim(),
-                                    url: url,
-                                    snippet: snippetElement ? snippetElement.textContent.trim() : '',
-                                    position: index + 1,
-                                    source: 'google'
-                                });
+                        elements.forEach((element, index) => {
+                            const titleElement = element.querySelector('h3, .LC20lb');
+                            const linkElement = element.querySelector('a[href]');
+                            const snippetElement = element.querySelector('.VwiC3b, .st, .aCOpRe');
+
+                            if (titleElement && linkElement) {
+                                const url = linkElement.href;
+                                // Filter out non-http URLs and Google's own pages
+                                if (url && url.startsWith('http') && !url.includes('google.com')) {
+                                    results.push({
+                                        title: titleElement.textContent.trim(),
+                                        url: url,
+                                        snippet: snippetElement ? snippetElement.textContent.trim() : '',
+                                        position: index + 1,
+                                        source: 'google'
+                                    });
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    return results;
-                }
-            """)
+                        return results;
+                    }
+                """)
 
-            self.logger.info(f"Found {len(results)} Google results for: {query}")
-            return results[:max_results]
+                self.logger.info(f"Found {len(results)} Google results for: {query}")
+                return results[:max_results]
 
-        except Exception as e:
-            self.logger.error(f"Google search failed for '{query}': {e}")
+            except Exception as e:
+                self.logger.error(f"Google search failed for '{query}': {e}")
+                if self.windows_mode:
+                    self.logger.warning("Google search failed on Windows - this may be due to regional restrictions or Playwright compatibility issues")
+                return []
+            finally:
+                await page.close()
+                await self.playwright_manager.return_browser(browser)
+
+        except NotImplementedError as e:
+            self.logger.error(f"Playwright not properly installed or configured: {e}")
+            self.logger.error("Please run: playwright install")
             return []
-        finally:
-            await page.close()
-            await self.playwright_manager.return_browser(browser)
+        except Exception as e:
+            self.logger.error(f"Unexpected error in Google search: {e}")
+            return []
 
     async def search_bing(
         self,
@@ -91,52 +110,64 @@ class SearchEngineScraper:
 
         await self._rate_limit(delay)
 
-        browser = await self.playwright_manager.get_browser()
-        page = await self.playwright_manager.create_page(browser)
-
         try:
-            search_url = f"https://www.bing.com/search?q={quote_plus(query)}&count={max_results}"
+            browser = await self.playwright_manager.get_browser()
+            page = await self.playwright_manager.create_page(browser)
 
-            self.logger.info(f"Searching Bing for: {query}")
-            await page.goto(search_url, wait_until="networkidle")
-            await self.playwright_manager.wait_for_load(page)
+            try:
+                search_url = f"https://www.bing.com/search?q={quote_plus(query)}&count={max_results}"
 
-            results = await page.evaluate("""
-                () => {
-                    const results = [];
-                    const elements = document.querySelectorAll('li.b_algo, .b_algo');
+                self.logger.info(f"Searching Bing for: {query}")
+                await page.goto(search_url, wait_until="networkidle")
+                await self.playwright_manager.wait_for_load(page)
 
-                    elements.forEach((element, index) => {
-                        const titleElement = element.querySelector('h2 a, .b_title a');
-                        const snippetElement = element.querySelector('.b_caption p, .b_snippet');
+                # Extract search results
+                results = await page.evaluate("""
+                    () => {
+                        const results = [];
+                        const elements = document.querySelectorAll('li.b_algo');
 
-                        if (titleElement) {
-                            const url = titleElement.href;
-                            if (url && url.startsWith('http') && !url.includes('bing.com')) {
-                                results.push({
-                                    title: titleElement.textContent.trim(),
-                                    url: url,
-                                    snippet: snippetElement ? snippetElement.textContent.trim() : '',
-                                    position: index + 1,
-                                    source: 'bing'
-                                });
+                        elements.forEach((element, index) => {
+                            const titleElement = element.querySelector('h2 a');
+                            const snippetElement = element.querySelector('.b_caption p');
+
+                            if (titleElement) {
+                                const url = titleElement.href;
+                                if (url && url.startsWith('http')) {
+                                    results.push({
+                                        title: titleElement.textContent.trim(),
+                                        url: url,
+                                        snippet: snippetElement ? snippetElement.textContent.trim() : '',
+                                        position: index + 1,
+                                        source: 'bing'
+                                    });
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    return results;
-                }
-            """)
+                        return results;
+                    }
+                """)
 
-            self.logger.info(f"Found {len(results)} Bing results for: {query}")
-            return results[:max_results]
+                self.logger.info(f"Found {len(results)} Bing results for: {query}")
+                return results[:max_results]
 
-        except Exception as e:
-            self.logger.error(f"Bing search failed for '{query}': {e}")
+            except Exception as e:
+                self.logger.error(f"Bing search failed for '{query}': {e}")
+                if self.windows_mode:
+                    self.logger.warning("Bing search failed on Windows - this may be due to regional restrictions or Playwright compatibility issues")
+                return []
+            finally:
+                await page.close()
+                await self.playwright_manager.return_browser(browser)
+
+        except NotImplementedError as e:
+            self.logger.error(f"Playwright not properly installed or configured: {e}")
+            self.logger.error("Please run: playwright install")
             return []
-        finally:
-            await page.close()
-            await self.playwright_manager.return_browser(browser)
+        except Exception as e:
+            self.logger.error(f"Unexpected error in Bing search: {e}")
+            return []
 
     async def search_duckduckgo(
         self,
@@ -148,135 +179,62 @@ class SearchEngineScraper:
 
         await self._rate_limit(delay)
 
-        browser = await self.playwright_manager.get_browser()
-        page = await self.playwright_manager.create_page(browser)
-
         try:
-            # Set realistic user agent
-            await page.set_extra_http_headers({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            })
+            browser = await self.playwright_manager.get_browser()
+            page = await self.playwright_manager.create_page(browser)
 
-            # Try multiple approaches
-            search_urls = [
-                f"https://duckduckgo.com/?q={quote_plus(query)}",
-                f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
-            ]
+            try:
+                search_url = f"https://duckduckgo.com/?q={quote_plus(query)}&t=h_&ia=web"
 
-            results = []
+                self.logger.info(f"Searching DuckDuckGo for: {query}")
+                await page.goto(search_url, wait_until="networkidle")
+                await self.playwright_manager.wait_for_load(page)
 
-            for search_url in search_urls:
-                try:
-                    self.logger.info(f"Trying DuckDuckGo URL: {search_url}")
+                # Extract search results
+                results = await page.evaluate("""
+                    () => {
+                        const results = [];
+                        const elements = document.querySelectorAll('article[data-testid="result"]');
 
-                    # Navigate with longer timeout and different wait strategy
-                    await page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
+                        elements.forEach((element, index) => {
+                            const titleElement = element.querySelector('h2 a');
+                            const snippetElement = element.querySelector('[data-testid="snippet"]');
 
-                    # Wait a bit for page to load
-                    await page.wait_for_timeout(3000)
-
-                    # Check if we got redirected to error page
-                    current_url = page.url
-                    self.logger.info(f"Current page URL: {current_url}")
-
-                    if "static-pages" in current_url or "418" in current_url:
-                        self.logger.warning(f"Redirected to error page: {current_url}")
-                        continue
-
-                    # Try to find search results
-                    results = await page.evaluate("""
-                        () => {
-                            const results = [];
-                            console.log('Starting DuckDuckGo result extraction...');
-
-                            // Try multiple selectors for different DuckDuckGo layouts
-                            const selectors = [
-                                '.result',
-                                '[data-testid="result"]',
-                                '.web-result',
-                                '.result__body',
-                                '.result__title',
-                                '.nrn-react-div',
-                                '[data-testid="result-title"]'
-                            ];
-
-                            let elements = [];
-                            for (const selector of selectors) {
-                                const found = document.querySelectorAll(selector);
-                                console.log(`Selector ${selector}: ${found.length} elements`);
-                                if (found.length > 0) {
-                                    elements = found;
-                                    break;
+                            if (titleElement) {
+                                const url = titleElement.href;
+                                if (url && url.startsWith('http')) {
+                                    results.push({
+                                        title: titleElement.textContent.trim(),
+                                        url: url,
+                                        snippet: snippetElement ? snippetElement.textContent.trim() : '',
+                                        position: index + 1,
+                                        source: 'duckduckgo'
+                                    });
                                 }
                             }
+                        });
 
-                            // If no specific selectors work, try general approach
-                            if (elements.length === 0) {
-                                const allLinks = document.querySelectorAll('a[href]');
-                                console.log(`Found ${allLinks.length} total links`);
+                        return results;
+                    }
+                """)
 
-                                allLinks.forEach((link, index) => {
-                                    const url = link.href;
-                                    if (url && url.startsWith('http') &&
-                                        !url.includes('duckduckgo.com') &&
-                                        !url.includes('javascript:') &&
-                                        url.length > 20) {
+                self.logger.info(f"Found {len(results)} DuckDuckGo results for: {query}")
+                return results[:max_results]
 
-                                        const title = link.textContent.trim();
-                                        if (title && title.length > 10) {
-                                            results.push({
-                                                title: title,
-                                                url: url,
-                                                snippet: '',
-                                                position: index + 1,
-                                                source: 'duckduckgo'
-                                            });
-                                        }
-                                    }
-                                });
-                            } else {
-                                elements.forEach((element, index) => {
-                                    const titleElement = element.querySelector('.result__title a, [data-testid="result-title"] a, a[href]');
-                                    const snippetElement = element.querySelector('.result__snippet, [data-testid="result-snippet"]');
+            except Exception as e:
+                self.logger.error(f"DuckDuckGo search failed for '{query}': {e}")
+                return []
+            finally:
+                await page.close()
+                await self.playwright_manager.return_browser(browser)
 
-                                    if (titleElement) {
-                                        const url = titleElement.href;
-                                        if (url && url.startsWith('http') && !url.includes('duckduckgo.com')) {
-                                            results.push({
-                                                title: titleElement.textContent.trim(),
-                                                url: url,
-                                                snippet: snippetElement ? snippetElement.textContent.trim() : '',
-                                                position: index + 1,
-                                                source: 'duckduckgo'
-                                            });
-                                        }
-                                    }
-                                });
-                            }
-
-                            console.log(`Total results extracted: ${results.length}`);
-                            return results;
-                        }
-                    """)
-
-                    if results and len(results) > 0:
-                        self.logger.info(f"Found {len(results)} DuckDuckGo results for: {query}")
-                        return results[:max_results]
-
-                except Exception as e:
-                    self.logger.warning(f"DuckDuckGo URL {search_url} failed: {e}")
-                    continue
-
-            # If all approaches failed, return empty results
-            self.logger.warning(f"All DuckDuckGo approaches failed for: {query}")
+        except NotImplementedError as e:
+            self.logger.error(f"Playwright not properly installed or configured: {e}")
+            self.logger.error("Please run: playwright install")
             return []
-
         except Exception as e:
-            self.logger.error(f"DuckDuckGo search failed for '{query}': {e}")
+            self.logger.error(f"Unexpected error in DuckDuckGo search: {e}")
             return []
-        finally:
-            await page.close()
-            await self.playwright_manager.return_browser(browser)
 
     async def search_yahoo(
         self,

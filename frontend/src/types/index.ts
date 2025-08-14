@@ -38,6 +38,34 @@ export interface Job {
     error_message?: string
 }
 
+// Specific scraper request types
+export interface WebScraperRequest {
+    keywords: string[]
+    max_results_per_keyword?: number
+    search_engines?: string[]
+    expand_keywords?: boolean
+    extract_images?: boolean
+    extract_links?: boolean
+}
+
+export interface PaperScraperRequest {
+    query: string
+    max_results?: number
+    sources?: string[]
+    extract_pdfs?: boolean
+    analyze_content?: boolean
+    download_pdfs?: boolean
+}
+
+export interface GovernmentScraperRequest {
+    keywords: string[]
+    sources?: string[]
+    max_documents_per_keyword?: number
+    process_documents?: boolean
+    analyze_content?: boolean
+}
+
+// Legacy type for backward compatibility
 export interface CreateJobRequest {
     job_type: 'web_scraper' | 'paper_scraper' | 'government_scraper'
     keywords: string[]

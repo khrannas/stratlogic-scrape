@@ -127,6 +127,17 @@ This document provides a comprehensive overview of all tasks required to build t
          - Fixed recent jobs: `recentJobs?.data?.map` → `recentJobs?.map`
          - Fixed documents page: `documents?.data?.map` → `documents?.map`
          - Fixed job detail page: `artifacts?.data?.map` → `artifacts?.map`
+               - **Individual Scraper API Integration**: Updated frontend to use specific scraper endpoints instead of generic jobs endpoint
+          - Web scraper: `/api/v1/web-scraper/scrape` with search engines, image extraction, etc.
+          - Paper scraper: `/api/v1/papers/search` with sources, PDF extraction, etc.
+          - Government scraper: `/api/v1/government/search` with document processing options
+          - Added scraper-specific form options and configuration
+          - Enhanced user experience with immediate job creation and execution
+        - **Playwright Windows Compatibility Fix**: Resolved NotImplementedError issues on Windows
+          - Created `scripts/install_playwright.py` for browser installation and compatibility checks
+          - Installed Playwright browsers using `playwright install`
+          - Added Windows-specific troubleshooting and error handling
+          - Verified installation with compatibility check script
 
 11. **Task 11: System Integration and Testing**
     - Priority: High

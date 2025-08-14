@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { Search, Globe, FileText, Building } from 'lucide-react'
 import api from '@/lib/api'
-import { CreateJobRequest } from '@/types'
+import { WebScraperRequest, PaperScraperRequest, GovernmentScraperRequest } from '@/types'
 import { Header } from '@/components/header'
 import { Sidebar } from '@/components/sidebar'
 import { useAuth } from '@/hooks/use-auth'
@@ -20,17 +20,74 @@ export default function ScrapingPage() {
         job_type: 'web_scraper' as const,
         keywords: '',
         max_results: 10,
+        // Web scraper specific options
+        search_engines: ['duckduckgo'],
+        expand_keywords: true,
+        extract_images: true,
+        extract_links: true,
+        // Paper scraper specific options
+        sources: ['arxiv'],
+        extract_pdfs: true,
+        analyze_content: true,
+        download_pdfs: true,
+        // Government scraper specific options
+        max_documents_per_keyword: 20,
+        process_documents: true,
     })
 
     const createJobMutation = useMutation({
-        mutationFn: async (data: CreateJobRequest) => {
-            const response = await api.post('/api/v1/jobs/', data)
+        mutationFn: async (data: { job_type: string; formData: any }) => {
+            const { job_type, formData } = data
+
+            let endpoint: string
+            let requestData: any
+
+            switch (job_type) {
+                case 'web_scraper':
+                    endpoint = '/api/v1/web-scraper/scrape'
+                    requestData = {
+                        keywords: formData.keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k),
+                        max_results_per_keyword: formData.max_results,
+                        search_engines: formData.search_engines,
+                        expand_keywords: formData.expand_keywords,
+                        extract_images: formData.extract_images,
+                        extract_links: formData.extract_links,
+                    }
+                    break
+                case 'paper_scraper':
+                    endpoint = '/api/v1/papers/search'
+                    requestData = {
+                        query: formData.keywords,
+                        max_results: formData.max_results,
+                        sources: formData.sources,
+                        extract_pdfs: formData.extract_pdfs,
+                        analyze_content: formData.analyze_content,
+                        download_pdfs: formData.download_pdfs,
+                    }
+                    break
+                case 'government_scraper':
+                    endpoint = '/api/v1/government/search'
+                    requestData = {
+                        keywords: formData.keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k),
+                        sources: formData.sources,
+                        max_documents_per_keyword: formData.max_documents_per_keyword,
+                        process_documents: formData.process_documents,
+                        analyze_content: formData.analyze_content,
+                    }
+                    break
+                default:
+                    throw new Error(`Unsupported job type: ${job_type}`)
+            }
+
+            const response = await api.post(endpoint, requestData)
             return response.data
         },
         onSuccess: (data) => {
             toast.success('Scraping job created successfully!')
             queryClient.invalidateQueries({ queryKey: ['jobs'] })
-            router.push(`/jobs/${data.id}`)
+            // Navigate to job detail page using the job ID from the response
+            const jobId = data.id || data.job_id
+            router.push(`/jobs/${jobId}`)
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.detail || 'Failed to create job')
@@ -48,8 +105,7 @@ export default function ScrapingPage() {
 
         createJobMutation.mutate({
             job_type: formData.job_type,
-            keywords,
-            max_results: formData.max_results,
+            formData,
         })
     }
 
@@ -73,6 +129,211 @@ export default function ScrapingPage() {
             icon: Building,
         },
     ]
+
+    // Render scraper-specific options based on selected job type
+    const renderScraperSpecificOptions = () => {
+        switch (formData.job_type) {
+            case 'web_scraper':
+                return (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Search Engines
+                            </label>
+                            <div className="space-y-2">
+                                {['duckduckgo', 'google', 'bing'].map((engine) => (
+                                    <label key={engine} className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.search_engines.includes(engine)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        search_engines: [...prev.search_engines, engine]
+                                                    }))
+                                                } else {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        search_engines: prev.search_engines.filter(s => s !== engine)
+                                                    }))
+                                                }
+                                            }}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm text-gray-700 capitalize">{engine}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.expand_keywords}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, expand_keywords: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Expand keywords for better results</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.extract_images}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, extract_images: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Extract images</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.extract_links}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, extract_links: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Extract links</span>
+                            </label>
+                        </div>
+                    </div>
+                )
+            case 'paper_scraper':
+                return (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Sources
+                            </label>
+                            <div className="space-y-2">
+                                {['arxiv', 'crossref'].map((source) => (
+                                    <label key={source} className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.sources.includes(source)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        sources: [...prev.sources, source]
+                                                    }))
+                                                } else {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        sources: prev.sources.filter(s => s !== source)
+                                                    }))
+                                                }
+                                            }}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm text-gray-700 capitalize">{source}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.extract_pdfs}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, extract_pdfs: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Extract PDF content</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.analyze_content}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, analyze_content: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Analyze content with AI</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.download_pdfs}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, download_pdfs: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Download PDFs</span>
+                            </label>
+                        </div>
+                    </div>
+                )
+            case 'government_scraper':
+                return (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Sources
+                            </label>
+                            <div className="space-y-2">
+                                {['websites', 'apis'].map((source) => (
+                                    <label key={source} className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.sources.includes(source)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        sources: [...prev.sources, source]
+                                                    }))
+                                                } else {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        sources: prev.sources.filter(s => s !== source)
+                                                    }))
+                                                }
+                                            }}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm text-gray-700 capitalize">{source}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="max_documents_per_keyword" className="block text-sm font-medium text-gray-700 mb-2">
+                                Max Documents per Keyword
+                            </label>
+                            <input
+                                type="number"
+                                id="max_documents_per_keyword"
+                                value={formData.max_documents_per_keyword}
+                                onChange={(e) => setFormData(prev => ({ ...prev, max_documents_per_keyword: parseInt(e.target.value) }))}
+                                min="1"
+                                max="100"
+                                className="input"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.process_documents}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, process_documents: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Process document content</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.analyze_content}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, analyze_content: e.target.checked }))}
+                                    className="mr-2"
+                                />
+                                <span className="text-sm text-gray-700">Analyze content with AI</span>
+                            </label>
+                        </div>
+                    </div>
+                )
+            default:
+                return null
+        }
+    }
 
     if (!isAuthenticated) {
         return (
@@ -135,22 +396,25 @@ export default function ScrapingPage() {
                                     </div>
                                 </div>
 
-                                {/* Keywords */}
+                                {/* Keywords/Query */}
                                 <div>
                                     <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 mb-2">
-                                        Keywords (comma-separated)
+                                        {formData.job_type === 'paper_scraper' ? 'Search Query' : 'Keywords (comma-separated)'}
                                     </label>
                                     <textarea
                                         id="keywords"
                                         value={formData.keywords}
                                         onChange={(e) => setFormData(prev => ({ ...prev, keywords: e.target.value }))}
-                                        placeholder="Enter keywords separated by commas..."
+                                        placeholder={formData.job_type === 'paper_scraper' ? "Enter search query..." : "Enter keywords separated by commas..."}
                                         rows={3}
                                         className="input"
                                         required
                                     />
                                     <p className="mt-1 text-sm text-gray-500">
-                                        Enter relevant keywords to search for. Separate multiple keywords with commas.
+                                        {formData.job_type === 'paper_scraper'
+                                            ? 'Enter a search query to find academic papers'
+                                            : 'Enter relevant keywords to search for. Separate multiple keywords with commas.'
+                                        }
                                     </p>
                                 </div>
 
@@ -173,6 +437,9 @@ export default function ScrapingPage() {
                                         Maximum number of results to collect (1-100)
                                     </p>
                                 </div>
+
+                                {/* Scraper-specific options */}
+                                {renderScraperSpecificOptions()}
 
                                 {/* Submit Button */}
                                 <div>
