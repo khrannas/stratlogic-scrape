@@ -12,6 +12,7 @@ class ScrapingJob(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     job_type = Column(String(50), nullable=False)
     keywords = Column(ARRAY(Text), nullable=False)
+    max_results = Column(Integer, default=10)
     expanded_keywords = Column(ARRAY(Text))
     status = Column(String(20), default="pending", index=True)
     progress = Column(Integer, default=0)

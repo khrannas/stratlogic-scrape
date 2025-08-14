@@ -27,7 +27,7 @@ export default function DocumentsPage() {
             if (filters.page) params.append('page', filters.page.toString())
             if (filters.size) params.append('size', filters.size.toString())
 
-            const response = await api.get(`/api/artifacts?${params.toString()}`)
+            const response = await api.get(`/api/v1/artifacts/?${params.toString()}`)
             return response.data
         },
         enabled: isAuthenticated,
@@ -105,7 +105,7 @@ export default function DocumentsPage() {
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-gray-200">
-                                        {documents?.data?.map((doc: Artifact) => (
+                                        {documents?.map((doc: Artifact) => (
                                             <div key={doc.id} className="p-6">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
@@ -141,7 +141,7 @@ export default function DocumentsPage() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {(!documents?.data || documents.data.length === 0) && (
+                                        {(!documents || documents.length === 0) && (
                                             <div className="p-8 text-center">
                                                 <p className="text-gray-500">No documents found</p>
                                             </div>

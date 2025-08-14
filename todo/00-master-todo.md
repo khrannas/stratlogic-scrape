@@ -99,6 +99,35 @@ This document provides a comprehensive overview of all tasks required to build t
       - Jobs endpoint (`/api/v1/jobs/`) responding properly
       - Auth endpoint (`/api/v1/auth/me`) working as expected
 
+11. **Task 11: Job Creation API Schema Fix**
+    - Priority: High
+    - Estimated Time: 1 day
+    - Status: ✅ Completed (Fixed job creation API to accept proper payload structure)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Fixed validation error for job creation endpoint (`/api/v1/jobs/`)
+      - Updated `ScrapingJobCreate` schema to include `max_results` field
+      - Made `user_id` optional in schema (extracted from authentication)
+      - Added authentication to job creation endpoint using `get_current_active_user`
+      - Updated `ScrapingJob` model to include `max_results` field
+      - Created and applied database migration for new field
+      - Updated job service to handle new fields
+      - API now accepts payload: `{"job_type": "paper_scraper", "keywords": ["health insurance"], "max_results": 10}`
+      - Returns 403 (authentication required) instead of 422 (validation error)
+             - **Frontend API Path Fix**: Updated all frontend API calls to use correct `/api/v1/` prefix
+         - Fixed job creation endpoint: `/api/jobs` → `/api/v1/jobs/`
+         - Fixed job listing endpoint: `/api/jobs` → `/api/v1/jobs/`
+         - Fixed job detail endpoint: `/api/jobs/${id}` → `/api/v1/jobs/${id}`
+         - Fixed artifacts endpoint: `/api/artifacts` → `/api/v1/artifacts/`
+         - Fixed auth endpoints: `/api/auth/login` → `/api/v1/auth/login`, `/api/auth/me` → `/api/v1/auth/me`
+       - **Environment Configuration**: Created frontend `.env.local` file with proper API URL
+       - **Frontend Data Structure Fix**: Fixed frontend components expecting `data` wrapper in API responses
+         - Fixed jobs page: `jobs?.data?.map` → `jobs?.map`
+         - Fixed dashboard: `stats?.jobs?.data?.filter` → `stats?.jobs?.filter`
+         - Fixed recent jobs: `recentJobs?.data?.map` → `recentJobs?.map`
+         - Fixed documents page: `documents?.data?.map` → `documents?.map`
+         - Fixed job detail page: `artifacts?.data?.map` → `artifacts?.map`
+
 11. **Task 11: System Integration and Testing**
     - Priority: High
     - Estimated Time: 3-4 days

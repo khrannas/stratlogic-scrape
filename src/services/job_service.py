@@ -11,7 +11,12 @@ class JobService:
             user_id=job_in.user_id,
             job_type=job_in.job_type,
             keywords=job_in.keywords,
+            max_results=job_in.max_results,
             status=job_in.status,
+            progress=job_in.progress,
+            total_items=job_in.total_items,
+            completed_items=job_in.completed_items,
+            error_message=job_in.error_message,
         )
         for config in job_in.configurations:
             db_job.configurations.append(JobConfiguration(**config.dict()))

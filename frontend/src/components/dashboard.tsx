@@ -10,8 +10,8 @@ export function Dashboard() {
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
             const [jobsRes, artifactsRes] = await Promise.all([
-                api.get('/api/jobs'),
-                api.get('/api/artifacts')
+                api.get('/api/v1/jobs/'),
+                api.get('/api/v1/artifacts/')
             ])
             return {
                 jobs: jobsRes.data,
@@ -23,7 +23,7 @@ export function Dashboard() {
     const { data: recentJobs } = useQuery({
         queryKey: ['recent-jobs'],
         queryFn: async () => {
-            const response = await api.get('/api/jobs?limit=5')
+            const response = await api.get('/api/v1/jobs/?limit=5')
             return response.data
         }
     })
@@ -72,7 +72,7 @@ export function Dashboard() {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Completed Jobs</p>
                             <p className="text-2xl font-bold text-gray-900">
-                                {stats?.jobs?.data?.filter((job: Job) => job.status === 'completed').length || 0}
+                                {stats?.jobs?.filter((job: Job) => job.status === 'completed').length || 0}
                             </p>
                         </div>
                     </div>
@@ -86,7 +86,7 @@ export function Dashboard() {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Failed Jobs</p>
                             <p className="text-2xl font-bold text-gray-900">
-                                {stats?.jobs?.data?.filter((job: Job) => job.status === 'failed').length || 0}
+                                {stats?.jobs?.filter((job: Job) => job.status === 'failed').length || 0}
                             </p>
                         </div>
                     </div>
@@ -113,7 +113,7 @@ export function Dashboard() {
                     <h2 className="text-lg font-medium text-gray-900">Recent Jobs</h2>
                 </div>
                 <div className="divide-y divide-gray-200">
-                    {recentJobs?.data?.map((job: Job) => (
+                    {recentJobs?.map((job: Job) => (
                         <div key={job.id} className="px-6 py-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
@@ -138,7 +138,7 @@ export function Dashboard() {
                             </div>
                         </div>
                     ))}
-                    {(!recentJobs?.data || recentJobs.data.length === 0) && (
+                    {(!recentJobs || recentJobs.length === 0) && (
                         <div className="px-6 py-8 text-center">
                             <p className="text-gray-500">No recent jobs</p>
                         </div>

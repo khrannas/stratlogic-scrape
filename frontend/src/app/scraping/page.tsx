@@ -24,7 +24,7 @@ export default function ScrapingPage() {
 
     const createJobMutation = useMutation({
         mutationFn: async (data: CreateJobRequest) => {
-            const response = await api.post('/api/jobs', data)
+            const response = await api.post('/api/v1/jobs/', data)
             return response.data
         },
         onSuccess: (data) => {

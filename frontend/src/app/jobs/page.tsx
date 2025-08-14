@@ -15,7 +15,7 @@ export default function JobsPage() {
     const { data: jobs, isLoading } = useQuery({
         queryKey: ['jobs'],
         queryFn: async () => {
-            const response = await api.get('/api/jobs')
+            const response = await api.get('/api/v1/jobs/')
             return response.data
         },
         enabled: isAuthenticated,
@@ -91,7 +91,7 @@ export default function JobsPage() {
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-gray-200">
-                                        {jobs?.data?.map((job: Job) => (
+                                        {jobs?.map((job: Job) => (
                                             <div key={job.id} className="p-6">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center">
@@ -151,7 +151,7 @@ export default function JobsPage() {
                                                 )}
                                             </div>
                                         ))}
-                                        {(!jobs?.data || jobs.data.length === 0) && (
+                                        {(!jobs || jobs.length === 0) && (
                                             <div className="p-8 text-center">
                                                 <p className="text-gray-500">No jobs found</p>
                                                 <Link

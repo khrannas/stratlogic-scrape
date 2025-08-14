@@ -23,6 +23,7 @@ class JobConfiguration(JobConfigurationBase):
 class ScrapingJobBase(BaseModel):
     job_type: str = Field(..., example="web_scraper")
     keywords: List[str] = Field(..., example=["AI", "machine learning"])
+    max_results: Optional[int] = Field(10, example=10)
     status: str = "pending"
     progress: int = 0
     total_items: int = 0
@@ -30,7 +31,7 @@ class ScrapingJobBase(BaseModel):
     error_message: Optional[str] = None
 
 class ScrapingJobCreate(ScrapingJobBase):
-    user_id: uuid.UUID
+    user_id: Optional[uuid.UUID] = None  # Will be extracted from authentication
     configurations: Optional[List[JobConfigurationCreate]] = []
 
 class ScrapingJobUpdate(BaseModel):

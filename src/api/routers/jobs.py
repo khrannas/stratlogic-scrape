@@ -5,6 +5,8 @@ from typing import List
 from src.api.schemas import job_schemas
 from src.services.job_service import job_service
 from src.core.database import get_db
+from src.api.dependencies.auth import get_current_active_user
+from src.core.models.user import User
 
 router = APIRouter(
     prefix="/jobs",
@@ -15,6 +17,7 @@ router = APIRouter(
 def create_job(
     *,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
     job_in: job_schemas.JobCreate,
 ):
     """
@@ -24,31 +27,29 @@ def create_job(
     source. The job will be created with an initial status and can be monitored for progress.
 
     **Request Body:**
-    - `name`: Descriptive name for the job
-    - `description`: Detailed description of what the job will scrape
-    - `source_url`: Target URL to scrape
-    - `scraper_type`: Type of scraper to use (web, paper, government)
-    - `priority`: Job priority level (low, medium, high)
-    - `user_id`: ID of the user creating the job
+    - `job_type`: Type of scraper to use (web_scraper, paper_scraper, government_scraper)
+    - `keywords`: List of keywords to search for
+    - `max_results`: Maximum number of results to return (optional, default: 10)
+    - `configurations`: Optional job configurations
 
     **Returns:**
     - Job object with generated ID and initial status
 
     **Raises:**
     - 422: If request body validation fails
+    - 401: If authentication fails
 
     **Example:**
     ```json
     {
-        "name": "Scrape Company News",
-        "description": "Collect latest news articles from company website",
-        "source_url": "https://example.com/news",
-        "scraper_type": "web",
-        "priority": "medium",
-        "user_id": "123e4567-e89b-12d3-a456-426614174000"
+        "job_type": "paper_scraper",
+        "keywords": ["health insurance"],
+        "max_results": 10
     }
     ```
     """
+    # Set the user_id from the authenticated user
+    job_in.user_id = current_user.id
     job = job_service.create_job(db, job_in=job_in)
     return job
 

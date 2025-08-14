@@ -23,7 +23,7 @@ export function useAuth() {
 
     const fetchUser = useCallback(async () => {
         try {
-            const response = await api.get('/api/auth/me')
+            const response = await api.get('/api/v1/auth/me')
             setUser(response.data)
         } catch (error) {
             console.error('Failed to fetch user:', error)
@@ -36,7 +36,7 @@ export function useAuth() {
 
     const loginMutation = useMutation({
         mutationFn: async (credentials: LoginRequest) => {
-            const response = await api.post<LoginResponse>('/api/auth/login', credentials)
+            const response = await api.post<LoginResponse>('/api/v1/auth/login', credentials)
             return response.data
         },
         onSuccess: (data) => {

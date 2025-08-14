@@ -14,15 +14,15 @@ import { useAuth } from '@/hooks/use-auth'
 const getArtifactsEndpoint = (jobType: string, jobId: string) => {
     switch (jobType) {
         case 'web_scraper':
-            return `/api/web_scraper/job/${jobId}/artifacts`
+            return `/api/v1/web_scraper/job/${jobId}/artifacts`
         case 'paper_scraper':
-            return `/api/paper_scraper/artifacts/${jobId}`
+            return `/api/v1/paper_scraper/artifacts/${jobId}`
         case 'government_scraper':
             // Government scraper doesn't have a specific job artifacts endpoint
             // We'll use the general artifacts endpoint with filtering
-            return `/api/artifacts?job_id=${jobId}`
+            return `/api/v1/artifacts/?job_id=${jobId}`
         default:
-            return `/api/artifacts?job_id=${jobId}`
+            return `/api/v1/artifacts/?job_id=${jobId}`
     }
 }
 
@@ -33,7 +33,7 @@ export default function JobDetailPage() {
     const { data: job, isLoading: jobLoading } = useQuery({
         queryKey: ['job', id],
         queryFn: async () => {
-            const response = await api.get(`/api/jobs/${id}`)
+            const response = await api.get(`/api/v1/jobs/${id}`)
             return response.data
         },
         enabled: isAuthenticated && !!id,
@@ -201,7 +201,7 @@ export default function JobDetailPage() {
                             {/* Results */}
                             <div className="bg-white rounded-lg shadow">
                                 <div className="p-6 border-b border-gray-200">
-                                    <h2 className="text-lg font-semibold text-gray-900">Results ({artifacts?.data?.length || 0})</h2>
+                                    <h2 className="text-lg font-semibold text-gray-900">Results ({artifacts?.length || 0})</h2>
                                 </div>
                                 {artifactsLoading ? (
                                     <div className="p-8 text-center">
@@ -210,7 +210,7 @@ export default function JobDetailPage() {
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-gray-200">
-                                        {artifacts?.data?.map((artifact: Artifact) => (
+                                        {artifacts?.map((artifact: Artifact) => (
                                             <div key={artifact.id} className="p-6">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
