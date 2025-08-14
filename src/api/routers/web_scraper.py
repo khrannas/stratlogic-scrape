@@ -179,6 +179,25 @@ async def scrape_single_url(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start URL scraping: {str(e)}")
 
+@router.post("/test-stealth", response_model=Dict[str, Any])
+async def test_stealth_functionality(
+    test_url: str = "https://bot.sannysoft.com",
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Test stealth functionality against bot detection
+    """
+    try:
+        result = await web_scraper.test_stealth_functionality(test_url)
+        return {
+            "message": "Stealth test completed",
+            "test_url": test_url,
+            "result": result
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Stealth test failed: {str(e)}")
+
 async def run_web_scraping_job(
     job_id: str,
     user_id: str,

@@ -9,6 +9,7 @@ class WebScraperSettings(BaseSettings):
     max_browsers: int = 5
     page_timeout: int = 30000
     proxy: Optional[str] = None
+    enable_stealth: bool = True
 
     # Search settings
     max_results_per_keyword: int = 10

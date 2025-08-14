@@ -1,4 +1,5 @@
 from playwright.async_api import async_playwright, Browser, Page
+from playwright_stealth import stealth_async
 import asyncio
 import logging
 from typing import Optional, Dict, Any, List
@@ -10,10 +11,11 @@ class PlaywrightManager:
     Manages Playwright browser instances with pooling and configuration
     """
 
-    def __init__(self, headless: bool = True, proxy: Optional[str] = None, max_browsers: int = 5):
+    def __init__(self, headless: bool = True, proxy: Optional[str] = None, max_browsers: int = 5, enable_stealth: bool = True):
         self.headless = headless
         self.proxy = proxy
         self.max_browsers = max_browsers
+        self.enable_stealth = enable_stealth
         self.logger = logging.getLogger(__name__)
         self.browser_pool: List[Browser] = []
         self.playwright = None
@@ -28,7 +30,7 @@ class PlaywrightManager:
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0"
         ]
 
-        self.logger.info(f"PlaywrightManager initialized with max_browsers={max_browsers}, headless={headless}")
+        self.logger.info(f"PlaywrightManager initialized with max_browsers={max_browsers}, headless={headless}, stealth={enable_stealth}")
 
     async def __aenter__(self):
         """Async context manager entry"""
@@ -42,6 +44,7 @@ class PlaywrightManager:
     async def start(self):
         """Start the Playwright instance"""
         if self.playwright is None:
+            # Use regular playwright
             self.playwright = await async_playwright().start()
             self.logger.info("Playwright started")
 
@@ -130,6 +133,11 @@ class PlaywrightManager:
     async def create_page(self, browser: Browser) -> Page:
         """Create a new page with configured settings"""
         page = await browser.new_page()
+
+        # Apply stealth measures if enabled
+        if self.enable_stealth:
+            await stealth_async(page)
+            self.logger.debug("Stealth measures applied to page")
 
         # Set random user agent
         user_agent = random.choice(self.user_agents)
@@ -222,5 +230,59 @@ class PlaywrightManager:
             "max_browsers": self.max_browsers,
             "headless": self.headless,
             "proxy": self.proxy,
+            "stealth_enabled": self.enable_stealth,
             "timestamp": datetime.utcnow().isoformat()
         }
+
+    async def verify_stealth(self, page: Page) -> Dict[str, Any]:
+        """Verify that stealth measures are working properly"""
+        try:
+            # Check various stealth indicators
+            stealth_checks = await page.evaluate("""
+                () => {
+                    return {
+                        webdriver: navigator.webdriver,
+                        languages: navigator.languages,
+                        plugins: navigator.plugins.length,
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        hardwareConcurrency: navigator.hardwareConcurrency,
+                        deviceMemory: navigator.deviceMemory,
+                        maxTouchPoints: navigator.maxTouchPoints,
+                        cookieEnabled: navigator.cookieEnabled,
+                        doNotTrack: navigator.doNotTrack,
+                        onLine: navigator.onLine,
+                        permissions: typeof navigator.permissions !== 'undefined',
+                        mediaDevices: typeof navigator.mediaDevices !== 'undefined',
+                        webGL: typeof WebGLRenderingContext !== 'undefined',
+                        canvas: typeof HTMLCanvasElement !== 'undefined'
+                    }
+                }
+            """)
+
+            # Additional checks for common bot detection methods
+            additional_checks = await page.evaluate("""
+                () => {
+                    return {
+                        chrome: typeof window.chrome !== 'undefined',
+                        permissions: typeof window.chrome?.runtime !== 'undefined',
+                        automation: typeof window.chrome?.runtime?.onConnect !== 'undefined',
+                        cdc: document.querySelector('*[class*="cdc"]') !== null,
+                        automation_script: document.querySelector('script[src*="automation"]') !== null
+                    }
+                }
+            """)
+
+            stealth_status = {
+                **stealth_checks,
+                **additional_checks,
+                "stealth_enabled": self.enable_stealth,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+            self.logger.info(f"Stealth verification completed: webdriver={stealth_checks.get('webdriver')}")
+            return stealth_status
+
+        except Exception as e:
+            self.logger.error(f"Failed to verify stealth: {e}")
+            return {"error": str(e), "stealth_enabled": self.enable_stealth}

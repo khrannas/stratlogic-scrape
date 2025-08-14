@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from .playwright_manager import PlaywrightManager
 from .search_engines import SearchEngineScraper
 from .content_extractor import ContentExtractor
+from .config import web_scraper_settings
 from src.services.llm_service import llm_service
 from src.services.artifact_service import artifact_service
 from src.services.job_service import job_service
@@ -23,7 +24,12 @@ class WebScraper:
         self.logger = logging.getLogger(__name__)
 
         # Initialize components
-        self.playwright_manager = PlaywrightManager()
+        self.playwright_manager = PlaywrightManager(
+            headless=web_scraper_settings.headless,
+            proxy=web_scraper_settings.proxy,
+            max_browsers=web_scraper_settings.max_browsers,
+            enable_stealth=web_scraper_settings.enable_stealth
+        )
         self.search_engine_scraper = SearchEngineScraper(self.playwright_manager)
         self.content_extractor = ContentExtractor()
         self.artifact_storage = ArtifactStorage()
@@ -302,6 +308,49 @@ class WebScraper:
             'llm_provider_info': llm_service.get_provider_info(),
             'timestamp': datetime.utcnow().isoformat()
         }
+
+    async def test_stealth_functionality(self, test_url: str = "https://bot.sannysoft.com") -> Dict[str, Any]:
+        """Test stealth functionality against a bot detection test site"""
+        try:
+            self.logger.info(f"Testing stealth functionality against {test_url}")
+
+            # Get a browser and page
+            browser = await self.playwright_manager.get_browser()
+            page = await self.playwright_manager.create_page(browser)
+
+            try:
+                # Navigate to test URL
+                await page.goto(test_url, wait_until="networkidle")
+                await self.playwright_manager.wait_for_load(page)
+
+                # Verify stealth measures
+                stealth_status = await self.playwright_manager.verify_stealth(page)
+
+                # Take screenshot for verification
+                screenshot_path = await self.playwright_manager.take_screenshot(page)
+
+                # Get page content for analysis
+                page_content = await self.playwright_manager.get_page_content(page)
+
+                return {
+                    'stealth_status': stealth_status,
+                    'screenshot_path': screenshot_path,
+                    'page_title': page_content.get('title', ''),
+                    'test_url': test_url,
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+
+            finally:
+                await page.close()
+                await self.playwright_manager.return_browser(browser)
+
+        except Exception as e:
+            self.logger.error(f"Stealth test failed: {e}")
+            return {
+                'error': str(e),
+                'test_url': test_url,
+                'timestamp': datetime.utcnow().isoformat()
+            }
 
     async def cleanup(self):
         """Cleanup resources"""

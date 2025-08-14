@@ -58,8 +58,11 @@ This system provides a unified platform for scraping and storing various types o
 - **Selenium** - Alternative web automation
 
 ### AI/ML Integration
+- **LiteLLM** - Unified LLM interface supporting multiple providers
+- **OpenAI** - GPT-4, GPT-4o, and other OpenAI models
 - **OpenRouter** - Cost-effective LLM access (GPT-4, Claude, etc.)
 - **Google Gemini** - Free/cheap LLM for content analysis
+- **Anthropic** - Claude models via OpenRouter
 - **LangChain** - LLM orchestration
 - **Transformers** - Text processing and analysis
 
@@ -192,8 +195,15 @@ python src/main.py
 - `MINIO_SECRET_KEY` - MinIO secret key
 - `POSTGRES_URL` - PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
+
+#### LLM Configuration
+- `LLM_PROVIDER` - LLM provider (openai, gemini, openrouter, anthropic)
+- `OPENAI_API_KEY` - OpenAI API key
 - `OPENROUTER_API_KEY` - OpenRouter API key for cost-effective LLM access
-- `GEMINI_API_KEY` - Google Gemini API key for free/cheap LLM
+- `GOOGLE_API_KEY` - Google API key for Gemini models
+- `GEMINI_API_KEY` - Google Gemini API key (alternative to GOOGLE_API_KEY)
+- `USE_LITELLM_PROXY` - Enable LiteLLM proxy (true/false)
+- `LITELLM_PROXY_URL` - LiteLLM proxy URL (default: http://localhost:4000)
 - `ARXIV_API_KEY` - arXiv API key (optional)
 
 ### Scraper Configuration
@@ -201,6 +211,22 @@ Each scraper module has its own configuration file:
 - `config/web_scraper.yaml`
 - `config/paper_scraper.yaml`
 - `config/government_scraper.yaml`
+
+### LiteLLM Configuration
+The system uses LiteLLM for unified LLM access. You can configure it in two ways:
+
+#### Direct Integration (Default)
+Set your API keys in the environment variables and the system will use LiteLLM directly:
+```bash
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your-openai-key
+```
+
+#### LiteLLM Proxy (Optional)
+For advanced features like model routing, caching, and observability:
+1. Set `USE_LITELLM_PROXY=true` in your `.env` file
+2. The LiteLLM proxy will be available at `http://localhost:4000`
+3. Configure models in `litellm-config.yaml`
 
 ## 📈 Monitoring & Analytics
 

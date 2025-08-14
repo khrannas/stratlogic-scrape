@@ -99,6 +99,37 @@ This document provides a comprehensive overview of all tasks required to build t
       - Jobs endpoint (`/api/v1/jobs/`) responding properly
       - Auth endpoint (`/api/v1/auth/me`) working as expected
 
+10.6. **Task 10.6: Playwright Stealth Integration**
+    - Priority: High
+    - Estimated Time: 1 day
+    - Status: ✅ Completed (Implemented playwright-stealth for bot detection avoidance)
+    - Dependencies: Task 01-09
+    - **Features Implemented:**
+      - Added `playwright-stealth==1.0.5` to requirements.txt and requirements_windows.txt
+      - Integrated stealth mode into PlaywrightManager with configurable enable_stealth parameter
+      - Enhanced web scraper configuration with stealth options
+      - Added stealth verification method to check bot detection evasion
+      - Created API endpoint `/web-scraper/test-stealth` for testing stealth functionality
+      - Added comprehensive test script `scripts/test_stealth.py` for verification
+      - Updated web scraper to use stealth configuration from settings
+      - All stealth measures automatically applied to all pages when enabled
+
+11. **Task 11: LiteLLM Integration and LLM Service Refactoring**
+    - Priority: High
+    - Estimated Time: 1-2 days
+    - Status: ✅ Completed (Successfully integrated LiteLLM and refactored LLM service)
+    - Dependencies: Task 01-10.5
+    - **Changes Made:**
+      - Added LiteLLM as dependency in requirements.txt
+      - Refactored LLM service to use LiteLLM instead of direct API calls
+      - Added LiteLLM proxy service to docker-compose.yml
+      - Created litellm-config.yaml for model configuration
+      - Updated environment configuration to support multiple LLM providers
+      - Added support for OpenAI, Google Gemini, OpenRouter, and Anthropic
+      - Maintained backward compatibility with existing code
+      - Updated documentation and README
+      - Created test script for LiteLLM integration verification
+
 10.6. **Task 10.6: Documents Page API Integration Fix**
     - Priority: High
     - Estimated Time: 2 hours

@@ -32,6 +32,7 @@ class ScrapingJobBase(BaseModel):
 
 class ScrapingJobCreate(ScrapingJobBase):
     user_id: Optional[uuid.UUID] = None  # Will be extracted from authentication
+    expanded_keywords: Optional[List[str]] = []
     configurations: Optional[List[JobConfigurationCreate]] = []
 
 class ScrapingJobUpdate(BaseModel):

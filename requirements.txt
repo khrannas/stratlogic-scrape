@@ -1,6 +1,6 @@
 # Core dependencies
 fastapi==0.116.1
-uvicorn>=0.24.0
+uvicorn==0.35.0
 sqlalchemy==2.0.41
 psycopg2-binary==2.9.10
 redis==6.4.0
@@ -15,21 +15,15 @@ python-jose==3.5.0
 python-multipart==0.0.20
 
 # AI/ML dependencies
-langchain==0.3.26
-langchain-core==0.3.69
-langchain-google-genai==2.0.10
-langchain-text-splitters==0.3.8
-google-generativeai==0.8.5
-openai==1.68.0
-openai-whisper==20250625
+litellm==1.75.5.post1
 
 # Web scraping dependencies
 beautifulsoup4==4.13.4
-lxml==5.4.0
-requests==2.32.4
+requests==2.31.0
 aiohttp==3.12.15
 httpx==0.28.1
 python-magic==0.4.27
+playwright-stealth==1.0.5
 # python-magic-bin==0.4.14
 
 # Image and document processing
@@ -46,9 +40,9 @@ email-validator==2.2.0
 # Academic paper scraping dependencies
 arxiv==2.1.0
 crossref-commons==0.0.7
-semantic-scholar==0.5.0
-spacy==3.8.2
-grobid-client==0.0.3
+# scholarly==1.7.11  # Removed due to dependency conflicts
+# spacy==3.8.7       # Removed due to compilation issues
+# grobid-client==0.8.8  # Removed due to dependency conflicts
 
 # Development dependencies
 pytest==8.4.1

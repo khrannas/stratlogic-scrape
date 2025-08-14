@@ -2,44 +2,56 @@ from typing import List, Dict, Any, Optional, Union
 import logging
 import asyncio
 from datetime import datetime
+import os
 
-# OpenAI imports
-from openai import OpenAI, AsyncOpenAI
-from openai.types.chat import ChatCompletion
-
-# Google GenAI imports
-import google.generativeai as genai
-from google.generativeai import GenerativeModel
-
-#
+# LiteLLM imports
+import litellm
+from litellm import completion
 
 from src.core.config import settings
 
 class LLMService:
     """
-    Service for interacting with Large Language Models (OpenAI and Google Gemini)
+    Service for interacting with Large Language Models using LiteLLM
+    Supports OpenAI, Google Gemini, OpenRouter, and other providers
     """
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.provider = settings.LLM_PROVIDER.lower()
 
-        # Initialize OpenAI client
-        if settings.OPENAI_API_KEY:
-            self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-            self.async_openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        else:
-            self.openai_client = None
-            self.async_openai_client = None
+        # Set up LiteLLM environment variables
+        self._setup_litellm_environment()
 
-        # Initialize Google GenAI client
-        if settings.GOOGLE_API_KEY:
-            genai.configure(api_key=settings.GOOGLE_API_KEY)
-            self.gemini_model = GenerativeModel('gemini-2.0-flash-001')
-        else:
-            self.gemini_model = None
+        # Configure default models for each provider
+        self.default_models = {
+            "openai": "gpt-4o",
+            "gemini": "gemini-2.0-flash-001",
+            "openrouter": "openrouter/gpt-4o",
+            "anthropic": "claude-3-5-sonnet-20241022"
+        }
+
+        # Configure LiteLLM proxy if enabled
+        if settings.USE_LITELLM_PROXY:
+            litellm.api_base = settings.LITELLM_PROXY_URL
+            litellm.api_key = "sk-1234"  # Master key for proxy
+            self.logger.info(f"Using LiteLLM proxy at: {settings.LITELLM_PROXY_URL}")
 
         self.logger.info(f"LLM Service initialized with provider: {self.provider}")
+
+    def _setup_litellm_environment(self):
+        """Set up LiteLLM environment variables based on configuration"""
+        # Set API keys for different providers
+        if settings.OPENAI_API_KEY:
+            os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
+
+        if settings.OPENROUTER_API_KEY:
+            os.environ["OPENROUTER_API_KEY"] = settings.OPENROUTER_API_KEY
+
+        if settings.GOOGLE_API_KEY:
+            os.environ["GOOGLE_API_KEY"] = settings.GOOGLE_API_KEY
+        elif settings.GEMINI_API_KEY:
+            os.environ["GOOGLE_API_KEY"] = settings.GEMINI_API_KEY
 
     async def generate_text(
         self,
@@ -49,70 +61,38 @@ class LLMService:
         model: Optional[str] = None
     ) -> str:
         """
-        Generate text using the configured LLM provider
+        Generate text using the configured LLM provider via LiteLLM
         """
         try:
-            if self.provider == "openai" and self.openai_client:
-                return await self._generate_text_openai(
-                    prompt, max_tokens, temperature, model
-                )
-            elif self.provider == "gemini" and self.gemini_model:
-                return await self._generate_text_gemini(
-                    prompt, max_tokens, temperature, model
-                )
+            # Determine the model to use
+            if model:
+                model_name = model
             else:
-                raise ValueError(f"Unsupported LLM provider: {self.provider}")
+                model_name = self.default_models.get(self.provider, "gpt-4o")
+
+            # Add provider prefix if not already present and not using proxy
+            if not settings.USE_LITELLM_PROXY:
+                if self.provider == "openrouter" and not model_name.startswith("openrouter/"):
+                    model_name = f"openrouter/{model_name}"
+                elif self.provider == "gemini" and not model_name.startswith("gemini/"):
+                    model_name = f"gemini/{model_name}"
+
+            self.logger.info(f"Generating text with model: {model_name}")
+
+            # Use LiteLLM completion
+            response = await asyncio.to_thread(
+                completion,
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+
+            return response.choices[0].message.content
 
         except Exception as e:
             self.logger.error(f"Text generation failed: {e}")
             raise
-
-    async def _generate_text_openai(
-        self,
-        prompt: str,
-        max_tokens: int = 1000,
-        temperature: float = 0.7,
-        model: Optional[str] = None
-    ) -> str:
-        """Generate text using OpenAI"""
-        model_name = model or "gpt-4o"
-
-        response = await self.async_openai_client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=max_tokens,
-            temperature=temperature
-        )
-
-        return response.choices[0].message.content
-
-    async def _generate_text_gemini(
-        self,
-        prompt: str,
-        max_tokens: int = 1000,
-        temperature: float = 0.7,
-        model: Optional[str] = None
-    ) -> str:
-        """Generate text using Google Gemini"""
-        model_name = model or "gemini-2.0-flash-001"
-
-        # Create model instance
-        genai_model = GenerativeModel(model_name)
-
-        # Configure generation
-        generation_config = genai.types.GenerationConfig(
-            max_output_tokens=max_tokens,
-            temperature=temperature
-        )
-
-        response = await genai_model.generate_content_async(
-            prompt,
-            generation_config=generation_config
-        )
-
-        return response.text
 
     async def expand_keywords(
         self,
@@ -265,8 +245,10 @@ class LLMService:
         """
         return {
             "provider": self.provider,
-            "openai_available": self.openai_client is not None,
-            "gemini_available": self.gemini_model is not None,
+            "default_model": self.default_models.get(self.provider, "unknown"),
+            "available_providers": list(self.default_models.keys()),
+            "using_proxy": settings.USE_LITELLM_PROXY,
+            "proxy_url": settings.LITELLM_PROXY_URL if settings.USE_LITELLM_PROXY else None,
             "timestamp": datetime.utcnow().isoformat()
         }
 
