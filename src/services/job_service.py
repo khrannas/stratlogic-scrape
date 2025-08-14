@@ -1,9 +1,12 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 import uuid
+import asyncio
+from datetime import datetime
 
 from src.core.models.job import ScrapingJob, JobConfiguration
 from src.api.schemas import job_schemas
+from src.core.database import get_db
 
 class JobService:
     def create_job(self, db: Session, *, job_in: job_schemas.ScrapingJobCreate) -> ScrapingJob:
@@ -53,5 +56,82 @@ class JobService:
 
     def delete_job(self, db: Session, *, job_id: uuid.UUID) -> ScrapingJob:
         return self.remove_job(db, job_id=job_id)
+
+    async def update_job_status(self, job_id: str, status: str, error_message: str = None):
+        """
+        Update job status asynchronously
+
+        Args:
+            job_id: Job identifier
+            status: New status
+            error_message: Error message if status is failed
+        """
+        try:
+            # Get database session
+            db = next(get_db())
+
+            # Get job
+            job = self.get_job(db, job_id=uuid.UUID(job_id))
+            if not job:
+                return
+
+            # Update status
+            job.status = status
+            job.updated_at = datetime.utcnow()
+
+            if status == "running" and not job.started_at:
+                job.started_at = datetime.utcnow()
+            elif status in ["completed", "failed"] and not job.completed_at:
+                job.completed_at = datetime.utcnow()
+
+            if error_message:
+                job.error_message = error_message
+
+            # Save changes
+            db.add(job)
+            db.commit()
+            db.refresh(job)
+
+        except Exception as e:
+            print(f"Error updating job status: {e}")
+        finally:
+            db.close()
+
+    async def update_job_results(self, job_id: str, results: Dict[str, Any]):
+        """
+        Update job with results asynchronously
+
+        Args:
+            job_id: Job identifier
+            results: Results data
+        """
+        try:
+            # Get database session
+            db = next(get_db())
+
+            # Get job
+            job = self.get_job(db, job_id=uuid.UUID(job_id))
+            if not job:
+                return
+
+            # Update with results
+            if "total_items" in results:
+                job.total_items = results["total_items"]
+            if "completed_items" in results:
+                job.completed_items = results["completed_items"]
+            if "progress" in results:
+                job.progress = results["progress"]
+
+            job.updated_at = datetime.utcnow()
+
+            # Save changes
+            db.add(job)
+            db.commit()
+            db.refresh(job)
+
+        except Exception as e:
+            print(f"Error updating job results: {e}")
+        finally:
+            db.close()
 
 job_service = JobService()
