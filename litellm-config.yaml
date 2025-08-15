@@ -45,3 +45,5 @@ litellm_settings:
 general_settings:
   master_key: "sk-1234"
   database_url: "postgresql://user:password@db:5432/stratlogic"
+  default_model: "openrouter-gpt-4o"
+  default_provider: "openrouter"

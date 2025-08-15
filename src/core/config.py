@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     MINIO_SECURE: bool = False
 
     # LLM & Scraper APIs
-    LLM_PROVIDER: str = "openai"  # "openai", "gemini", "openrouter", "anthropic"
+    LLM_PROVIDER: str = "openrouter"  # "openai", "gemini", "openrouter", "anthropic"
     OPENAI_API_KEY: str | None = None
     OPENROUTER_API_KEY: str | None = None
     GOOGLE_API_KEY: str | None = None
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     ARXIV_API_KEY: str | None = None
 
     # LiteLLM Proxy Configuration
-    USE_LITELLM_PROXY: bool = False
+    USE_LITELLM_PROXY: bool = True
     LITELLM_PROXY_URL: str = "http://localhost:4000"
 
     # Auth

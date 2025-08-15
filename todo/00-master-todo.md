@@ -99,6 +99,69 @@ This document provides a comprehensive overview of all tasks required to build t
       - Jobs endpoint (`/api/v1/jobs/`) responding properly
       - Auth endpoint (`/api/v1/auth/me`) working as expected
 
+10.6. **Task 10.6: Python 3.13 Compatibility Fix**
+    - Priority: High
+    - Estimated Time: 0.5 day
+    - Status: ✅ Completed (Fixed Python 3.13 compatibility issue with arxiv library)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Fixed `ModuleNotFoundError: No module named 'cgi'` error caused by feedparser dependency
+      - Replaced arxiv library with direct REST API calls to arXiv
+      - Updated `src/scrapers/paper_scraper/arxiv_client.py` to use aiohttp for API calls
+      - Removed arxiv dependency from requirements.txt
+      - Backend now starts successfully with Python 3.13
+      - All arXiv functionality preserved with improved error handling
+
+10.7. **Task 10.7: Frontend SSR and CORS Issues Fix**
+    - Priority: High
+    - Estimated Time: 0.5 day
+    - Status: ✅ Completed (Fixed frontend SSR localStorage issues and CORS configuration)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Fixed `ReferenceError: localStorage is not defined` error during SSR
+      - Updated `frontend/src/hooks/use-auth.ts` with safe localStorage access for SSR
+      - Updated `frontend/src/lib/api.ts` with safe localStorage access for SSR
+      - Enhanced CORS configuration in `src/api/middleware/cors.py` with additional origins
+      - Fixed TypeScript error in `frontend/src/app/scraping/page.tsx` with proper type definition
+      - Frontend now builds successfully without SSR errors
+      - CORS properly configured for frontend-backend communication
+
+10.8. **Task 10.8: Database Setup and Bcrypt Compatibility Fix**
+    - Priority: High
+    - Estimated Time: 0.5 day
+    - Status: ✅ Completed (Fixed database setup and bcrypt compatibility issues)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Fixed `psycopg2.errors.UndefinedTable: relation "users" does not exist` error
+      - Ran database migrations using `alembic upgrade head` to create all tables
+      - Seeded database with initial data using `scripts/seed_data.py`
+      - Fixed bcrypt compatibility warning with passlib
+      - Downgraded bcrypt from 4.3.0 to 3.2.2 for compatibility with passlib 1.7.4
+      - Updated requirements.txt to specify compatible bcrypt version
+      - Login functionality now working without warnings
+      - **Default Credentials Created:**
+        - Admin: admin@stratlogic.com / admin123
+        - Test: test@stratlogic.com / test123
+        - Demo: demo@stratlogic.com / demo123
+
+10.6. **Task 10.6: LiteLLM Configuration and OpenRouter Integration**
+    - Priority: High
+    - Estimated Time: 1 day
+    - Status: ✅ Completed (Fixed LiteLLM configuration and set OpenRouter as default)
+    - Dependencies: Task 01-09
+    - **Issues Resolved:**
+      - Added DATABASE_URL and LITELLM_MASTER_KEY to docker-compose.yml for litellm-proxy service
+      - Updated litellm-config.yaml to set openrouter-gpt-4o as default model
+      - Changed default LLM_PROVIDER from "openai" to "openrouter" in config.py and .env.example
+      - Set USE_LITELLM_PROXY to True by default
+      - Updated LLMService to use correct model names for OpenRouter
+      - Created test script `scripts/test_litellm_config.py` to verify configuration
+      - **Why config wasn't used before:**
+        - USE_LITELLM_PROXY was set to False by default
+        - Missing DATABASE_URL and LITELLM_MASTER_KEY environment variables in docker-compose
+        - Default provider was "openai" instead of "openrouter"
+        - Model names in LLMService didn't match litellm-config.yaml definitions
+
 10.6. **Task 10.6: Playwright Stealth Integration**
     - Priority: High
     - Estimated Time: 1 day

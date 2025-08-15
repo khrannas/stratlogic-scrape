@@ -27,7 +27,7 @@ class LLMService:
         self.default_models = {
             "openai": "gpt-4o",
             "gemini": "gemini-2.0-flash-001",
-            "openrouter": "openrouter/gpt-4o",
+            "openrouter": "openrouter-gpt-4o",  # Use the model name from litellm config
             "anthropic": "claude-3-5-sonnet-20241022"
         }
 

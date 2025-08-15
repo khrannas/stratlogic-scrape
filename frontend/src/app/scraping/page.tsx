@@ -17,7 +17,7 @@ export default function ScrapingPage() {
     const queryClient = useQueryClient()
 
     const [formData, setFormData] = useState({
-        job_type: 'web_scraper' as const,
+        job_type: 'web_scraper' as 'web_scraper' | 'paper_scraper' | 'government_scraper',
         keywords: '',
         max_results: 10,
         // Web scraper specific options

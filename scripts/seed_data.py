@@ -39,7 +39,7 @@ def seed_users():
     # Create admin user
     admin_user = User(
         username="admin",
-        email="admin@stratlogic.com",
+        email="admin@stratlogic.id",
         password_hash=hash_password("admin123"),
         full_name="System Administrator",
         role="admin",
@@ -50,7 +50,7 @@ def seed_users():
     # Create test user
     test_user = User(
         username="testuser",
-        email="test@stratlogic.com",
+        email="test@stratlogic.id",
         password_hash=hash_password("test123"),
         full_name="Test User",
         role="user",
@@ -61,7 +61,7 @@ def seed_users():
     # Create demo user
     demo_user = User(
         username="demo",
-        email="demo@stratlogic.com",
+        email="demo@stratlogic.id",
         password_hash=hash_password("demo123"),
         full_name="Demo User",
         role="user",

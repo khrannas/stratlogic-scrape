@@ -6,22 +6,55 @@ import api from '@/lib/api'
 import { User, LoginRequest, LoginResponse } from '@/types'
 import toast from 'react-hot-toast'
 
+// Safe localStorage access for SSR
+const getToken = (): string | null => {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('stratlogic_token')
+    }
+    return null
+}
+
+const setToken = (token: string): void => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('stratlogic_token', token)
+    }
+}
+
+const setRefreshToken = (token: string): void => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('stratlogic_refresh_token', token)
+    }
+}
+
+const removeTokens = (): void => {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('stratlogic_token')
+        localStorage.removeItem('stratlogic_refresh_token')
+    }
+}
+
 export function useAuth() {
     const [user, setUser] = useState<User | null>(null)
+    const [isClient, setIsClient] = useState(false)
     const queryClient = useQueryClient()
+
+    // Ensure we're on the client side
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
 
     // Use React Query for user data with proper caching
     const { data: userData, isLoading, error } = useQuery({
         queryKey: ['user'],
         queryFn: async () => {
-            const token = localStorage.getItem('stratlogic_token')
+            const token = getToken()
             if (!token) {
                 throw new Error('No token found')
             }
             const response = await api.get('/api/v1/auth/me')
             return response.data
         },
-        enabled: !!localStorage.getItem('stratlogic_token'),
+        enabled: isClient && !!getToken(),
         retry: false,
         staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
@@ -33,8 +66,7 @@ export function useAuth() {
             setUser(userData)
         } else if (error) {
             setUser(null)
-            localStorage.removeItem('stratlogic_token')
-            localStorage.removeItem('stratlogic_refresh_token')
+            removeTokens()
         }
     }, [userData, error])
 
@@ -44,8 +76,8 @@ export function useAuth() {
             return response.data
         },
         onSuccess: (data) => {
-            localStorage.setItem('stratlogic_token', data.access_token)
-            localStorage.setItem('stratlogic_refresh_token', data.refresh_token)
+            setToken(data.access_token)
+            setRefreshToken(data.refresh_token)
             setUser(data.user)
             // Invalidate and refetch user data
             queryClient.invalidateQueries({ queryKey: ['user'] })
@@ -57,8 +89,7 @@ export function useAuth() {
     })
 
     const logout = useCallback(() => {
-        localStorage.removeItem('stratlogic_token')
-        localStorage.removeItem('stratlogic_refresh_token')
+        removeTokens()
         setUser(null)
         queryClient.clear()
         toast.success('Logged out successfully')

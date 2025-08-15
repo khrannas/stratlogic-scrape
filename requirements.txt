@@ -10,6 +10,7 @@ alembic==1.16.4
 pydantic==2.11.7
 pydantic-settings==2.0.3
 passlib[bcrypt]==1.7.4
+bcrypt==3.2.2
 python-dotenv==1.1.1
 python-jose==3.5.0
 python-multipart==0.0.20
@@ -38,7 +39,7 @@ orjson==3.11.0
 email-validator==2.2.0
 
 # Academic paper scraping dependencies
-arxiv==2.1.0
+# arxiv==2.1.0  # Removed due to Python 3.13 compatibility issues
 crossref-commons==0.0.7
 # scholarly==1.7.11  # Removed due to dependency conflicts
 # spacy==3.8.7       # Removed due to compilation issues
